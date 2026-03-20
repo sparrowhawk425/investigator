@@ -73,15 +73,16 @@ type Name struct {
 	First string `json:"first"`
 	Last  string `json:"last"`
 }
+type Street struct {
+	Number int    `json:"number"`
+	Name   string `json:"name"`
+}
 type Location struct {
-	Street struct {
-		Number int    `json:"number"`
-		Name   string `json:"name"`
-	} `json:"street"`
-	City     string `json:"city"`
-	State    string `json:"state"`
-	Country  string `json:"country"`
-	Postcode any    `json:"postcode"`
+	Street   Street          `json:"street"`
+	City     string          `json:"city"`
+	State    string          `json:"state"`
+	Country  string          `json:"country"`
+	Postcode json.RawMessage `json:"postcode"`
 }
 
 type GeneratedName struct {

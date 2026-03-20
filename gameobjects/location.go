@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/samber/lo"
@@ -65,6 +64,33 @@ type Location struct {
 
 	quality Quality
 	loot    []availableLoot
+
+	Visitors []Character
+}
+
+func (loc Location) Equals(other Location) bool {
+	if loc.Type != other.Type {
+		return false
+	}
+	if loc.Address.Number != other.Address.Number {
+		return false
+	}
+	if loc.Address.Name != other.Address.Name {
+		return false
+	}
+	if loc.City != other.City {
+		return false
+	}
+	if loc.State != other.State {
+		return false
+	}
+	if loc.Country != other.Country {
+		return false
+	}
+	if loc.PostCode != other.PostCode {
+		return false
+	}
+	return true
 }
 
 func (loc Location) GetAvailableLoot() []Loot {
@@ -93,7 +119,6 @@ func (loc Location) GetQuality() string {
 func CreateLocation(fromLoc nameapi.Location, locType LocationType) Location {
 	qual := Quality(rand.IntN(3))
 	availableLoot := setAvailableLoot(locType, qual)
-	postCode := getPostalCode(fromLoc.Postcode)
 	return Location{
 		Type: locType,
 		Address: Address{
@@ -103,7 +128,7 @@ func CreateLocation(fromLoc nameapi.Location, locType LocationType) Location {
 		City:     fromLoc.City,
 		State:    fromLoc.State,
 		Country:  fromLoc.Country,
-		PostCode: postCode,
+		PostCode: parsePostCode(fromLoc.Postcode),
 		quality:  qual,
 		loot:     availableLoot,
 	}
@@ -118,21 +143,12 @@ func CreateRandomLocations(apiLocations []nameapi.Location) []Location {
 	return locations
 }
 
-// Have to do special conversion because the API returns a string or an int, but interface{} treats the ints as float64...
-func getPostalCode(postCode any) string {
-	strCode, ok := postCode.(string)
-	if ok {
-		return strCode
+// Have to do special conversion because the API returns a string or an int
+func parsePostCode(data []byte) string {
+	if len(data) > 1 && data[0] == '"' && data[len(data)-1] == '"' {
+		data = data[1 : len(data)-1]
 	}
-	intCode, ok := postCode.(int)
-	if ok {
-		return strconv.Itoa(intCode)
-	}
-	floatCode, ok := postCode.(float64)
-	if ok {
-		return strconv.FormatFloat(floatCode, 'f', -1, 64)
-	}
-	return "12345"
+	return string(data)
 }
 
 func setAvailableLoot(locType LocationType, quality Quality) []availableLoot {

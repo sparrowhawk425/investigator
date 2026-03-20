@@ -19,8 +19,7 @@ import (
 )
 
 func main() {
-	day := 1
-	timeOfDay := times.Morning
+	// Select country
 	scanner := bufio.NewScanner(os.Stdin)
 	countryNames := lo.Map(nameapi.Countries, func(country nameapi.Country, i int) string {
 		return country.Name
@@ -34,10 +33,14 @@ func main() {
 	}
 	char := nameResults[0]
 	target := enemies.CreateEnemy(char)
-	fmt.Printf("Hunting for %s %s, known %s\n", target.Character.Name.First, target.Character.Name.Last, target.Profiles[0].Name)
+	fmt.Printf("Hunting for %s %s, known %s\n", target.Character.Name.First, target.Character.Name.Last, target.Profile.Name)
 
 	// Add locations and people to game
-	gameState := gamelogic.GameState{}
+	gameState := gamelogic.GameState{
+		Day:       1,
+		TimeOfDay: times.Morning,
+	}
+	gameState.Criminals = append(gameState.Criminals, target)
 	results, err := nameapi.MakeHTTPGetRequest(country, 10)
 	if err != nil {
 		log.Fatalf("Error getting locations from API: %v", err)
@@ -56,21 +59,26 @@ func main() {
 	// REPL game loop
 	commands := commands.GetCommandMap()
 	for {
-		fmt.Printf("Day: %d Time: %s\n", day, times.GetTimeOfDayName(timeOfDay))
+		gameState.PrintDay()
+
+		// Get player input
 		fmt.Print("What do you wish to do? > ")
 		scanner.Scan()
 		cleanText := cleanInput(scanner.Text())
+
+		// Run command
+		update := false
 		cmd, exists := commands[cleanText[0]]
 		if exists {
-			if err := cmd.Callback(&gameState, cleanText[1:]); err != nil {
+			update, err = cmd.Callback(&gameState, cleanText[1:])
+			if err != nil {
 				fmt.Printf("%v\n", err)
 			}
 		} else {
 			fmt.Println("Unknown command")
 		}
-		timeOfDay = times.TransitionTimeOfDay(timeOfDay)
-		if timeOfDay == times.Morning {
-			day++
+		if update {
+			gameState.Update()
 		}
 	}
 }

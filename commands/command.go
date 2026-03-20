@@ -8,10 +8,11 @@ import (
 	"github.com/sparrowhawk425/investigators/gameobjects"
 )
 
+// Callback performs command action. Returns true if time should be updated
 type cliCommand struct {
 	name        string
 	description string
-	Callback    func(*gamelogic.GameState, []string) error
+	Callback    func(*gamelogic.GameState, []string) (bool, error)
 }
 
 func GetCommandMap() map[string]cliCommand {
@@ -36,34 +37,39 @@ func GetCommandMap() map[string]cliCommand {
 			description: "List the people",
 			Callback:    commandPeople,
 		},
+		"next": {
+			name:        "next",
+			description: "Move to the next time period",
+			Callback:    commandNext,
+		},
 	}
 	return commandMap
 }
 
-func commandExit(gs *gamelogic.GameState, _ []string) error {
+func commandExit(gs *gamelogic.GameState, _ []string) (bool, error) {
 	fmt.Println("Closing the Dossier... Goodbye!")
 	os.Exit(0)
-	return nil
+	return false, nil
 }
 
-func commandHelp(gs *gamelogic.GameState, _ []string) error {
+func commandHelp(gs *gamelogic.GameState, _ []string) (bool, error) {
 	fmt.Println("Welcome to the International Investigators!")
 	fmt.Println("Usage:")
 	fmt.Println("")
 	for _, cmd := range GetCommandMap() {
 		fmt.Printf("%s: %s\n", cmd.name, cmd.description)
 	}
-	return nil
+	return false, nil
 }
 
-func commandLocations(gs *gamelogic.GameState, params []string) error {
+func commandLocations(gs *gamelogic.GameState, params []string) (bool, error) {
 	locations := gs.Places
 	if len(params) > 0 {
 		locTypes := []gameobjects.LocationType{}
 		for _, param := range params {
 			locType, err := gameobjects.GetLocationType(param)
 			if err != nil {
-				return err
+				return false, err
 			}
 			locTypes = append(locTypes, locType)
 		}
@@ -93,10 +99,10 @@ func commandLocations(gs *gamelogic.GameState, params []string) error {
 		}
 		fmt.Println("")
 	}
-	return nil
+	return false, nil
 }
 
-func commandPeople(gs *gamelogic.GameState, _ []string) error {
+func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
 	for _, person := range gs.People {
 		fmt.Printf("%s %s, %s:\n", person.Name.First, person.Name.Last, person.Traits.Gender)
 		fmt.Printf("Age: %d\n", person.Traits.Dob.Age)
@@ -107,5 +113,9 @@ func commandPeople(gs *gamelogic.GameState, _ []string) error {
 		fmt.Printf("Nationality: %s\n", person.Traits.Nationality)
 		fmt.Println("")
 	}
-	return nil
+	return false, nil
+}
+
+func commandNext(gs *gamelogic.GameState, _ []string) (bool, error) {
+	return true, nil
 }
