@@ -10,7 +10,7 @@ type Profile struct {
 	ActiveDuring    times.TimeOfDay
 	SleepDuring     times.TimeOfDay
 	TargetLocations []gameobjects.LocationType
-	PreferredLoot   []gameobjects.Loot
+	PreferredLoot   []gameobjects.LootType
 	Solitary        bool
 
 	Action Action
@@ -25,8 +25,8 @@ func createBurglar() Profile {
 		TargetLocations: []gameobjects.LocationType{
 			gameobjects.Residence, gameobjects.Store, gameobjects.Museum,
 		},
-		PreferredLoot: []gameobjects.Loot{
-			gameobjects.Jewelry, gameobjects.Art,
+		PreferredLoot: []gameobjects.LootType{
+			gameobjects.Jewelry, gameobjects.Art, gameobjects.Money,
 		},
 		Solitary: true,
 		Action:   CreateBurgleAction(),

@@ -2,6 +2,7 @@ package enemies
 
 import (
 	"fmt"
+	"math/rand/v2"
 
 	"github.com/sparrowhawk425/investigators/gameobjects"
 	"github.com/sparrowhawk425/investigators/times"
@@ -11,13 +12,14 @@ import (
 type HasLocations interface {
 	GetTimeOfDay() times.TimeOfDay
 	GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location
-	GetLocationsByLoot(loots []gameobjects.Loot) []gameobjects.Location
+	GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location
 	AddCharacterToLocation(location gameobjects.Location, character gameobjects.Character)
+	CreateCrime(location gameobjects.Location, loot []gameobjects.Loot)
 }
 type Action struct {
 	Name string
 	Risk int //percent
-	Act  func(*HasLocations, *Enemy)
+	Act  func(HasLocations, *Enemy)
 }
 
 func CreateSleepAction() Action {
@@ -52,23 +54,40 @@ func CreateBurgleAction() Action {
 	}
 }
 
-func SleepAction(locations *HasLocations, enemy *Enemy) {
+func SleepAction(locations HasLocations, enemy *Enemy) {
 	fmt.Println("Sleeping...")
 }
 
-func LieLowAction(locations *HasLocations, enemy *Enemy) {
+func LieLowAction(locations HasLocations, enemy *Enemy) {
 	fmt.Println("Lying low...")
 }
 
-func ReconAction(locations *HasLocations, enemy *Enemy) {
+func ReconAction(locations HasLocations, enemy *Enemy) {
 	fmt.Println("Performing recon...")
 
-	(*locations).AddCharacterToLocation(*(enemy.Target), enemy.Character)
+	locations.AddCharacterToLocation(*(enemy.Target), enemy.Character)
 }
 
-func BurgleAction(locations *HasLocations, enemy *Enemy) {
+// TODO: There seem to be an inordinate amount of zeros returned from rand...
+func BurgleAction(locations HasLocations, enemy *Enemy) {
 	fmt.Println("Burgling...")
 
+	locations.AddCharacterToLocation(*(enemy.Target), enemy.Character)
+	stolenLoot := []gameobjects.Loot{}
+	for _, lootType := range enemy.GetPreferredLoot() {
+		maxLoot := enemy.Target.GetLootAmount(lootType)
+		// Take a random amount of the available loot
+		if maxLoot > 0 {
+			amt := rand.IntN(maxLoot + 1)
+			enemy.Target.UpdateLoot(lootType, -1*amt)
+			enemy.UpdateLoot(lootType, amt)
+			stolenLoot = append(stolenLoot, gameobjects.Loot{
+				Type:     lootType,
+				Quantity: amt,
+			})
+		}
+	}
+	locations.CreateCrime(*enemy.Target, stolenLoot)
 	// Enemy needs new target
 	enemy.Target = nil
 }

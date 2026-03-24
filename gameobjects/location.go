@@ -41,11 +41,6 @@ type Address struct {
 	Name   string
 }
 
-type availableLoot struct {
-	loot     Loot
-	quantity int
-}
-
 type Quality int
 
 const (
@@ -62,8 +57,9 @@ type Location struct {
 	Country  string
 	PostCode string
 
-	quality Quality
-	loot    []availableLoot
+	IsOccupied bool
+	quality    Quality
+	loot       []Loot
 
 	Visitors []Character
 }
@@ -92,12 +88,15 @@ func (loc Location) Equals(other Location) bool {
 	}
 	return true
 }
+func (loc Location) GetAddress() string {
+	return fmt.Sprintf("%d %s\n\t%s, %s", loc.Address.Number, loc.Address.Name, loc.City, loc.State)
+}
 
-func (loc Location) GetAvailableLoot() []Loot {
-	available := []Loot{}
+func (loc Location) GetAvailableLoot() []LootType {
+	available := []LootType{}
 	for _, loot := range loc.loot {
-		if loot.quantity > 0 {
-			available = append(available, loot.loot)
+		if loot.Quantity > 0 {
+			available = append(available, loot.Type)
 		}
 	}
 	return available
@@ -116,7 +115,25 @@ func (loc Location) GetQuality() string {
 	}
 }
 
-func CreateLocation(fromLoc nameapi.Location, locType LocationType) Location {
+func (loc Location) GetLootAmount(lootType LootType) int {
+	for _, availableLoot := range loc.loot {
+		if availableLoot.Type == lootType {
+			return availableLoot.Quantity
+		}
+	}
+	return 0
+}
+
+func (loc *Location) UpdateLoot(lootType LootType, amount int) {
+	for i := range loc.loot {
+		if loc.loot[i].Type == lootType {
+			loc.loot[i].Quantity += amount
+			return
+		}
+	}
+}
+
+func CreateLocation(fromLoc nameapi.Location, locType LocationType, isOccupied bool) Location {
 	qual := Quality(rand.IntN(3))
 	availableLoot := setAvailableLoot(locType, qual)
 	return Location{
@@ -125,12 +142,13 @@ func CreateLocation(fromLoc nameapi.Location, locType LocationType) Location {
 			Number: fromLoc.Street.Number,
 			Name:   fromLoc.Street.Name,
 		},
-		City:     fromLoc.City,
-		State:    fromLoc.State,
-		Country:  fromLoc.Country,
-		PostCode: parsePostCode(fromLoc.Postcode),
-		quality:  qual,
-		loot:     availableLoot,
+		City:       fromLoc.City,
+		State:      fromLoc.State,
+		Country:    fromLoc.Country,
+		PostCode:   parsePostCode(fromLoc.Postcode),
+		IsOccupied: isOccupied,
+		quality:    qual,
+		loot:       availableLoot,
 	}
 }
 
@@ -138,7 +156,8 @@ func CreateRandomLocations(apiLocations []nameapi.Location) []Location {
 	locations := make([]Location, len(apiLocations))
 	for i, apiLoc := range apiLocations {
 		locType := locationTypes[rand.IntN(len(locationTypes))]
-		locations[i] = CreateLocation(apiLoc, locType)
+		occupiedPct := rand.IntN(100)
+		locations[i] = CreateLocation(apiLoc, locType, occupiedPct > 10)
 	}
 	return locations
 }
@@ -151,7 +170,7 @@ func parsePostCode(data []byte) string {
 	return string(data)
 }
 
-func setAvailableLoot(locType LocationType, quality Quality) []availableLoot {
+func setAvailableLoot(locType LocationType, quality Quality) []Loot {
 	maxAmt := 1
 	switch quality {
 	case cheap:
@@ -161,30 +180,30 @@ func setAvailableLoot(locType LocationType, quality Quality) []availableLoot {
 	case expensive:
 		maxAmt = 10
 	}
-	loot := []availableLoot{}
+	loot := []Loot{}
 	switch locType {
 	case Residence:
-		loot = append(loot, availableLoot{loot: Jewelry, quantity: rand.IntN(maxAmt)})
-		loot = append(loot, availableLoot{loot: Money, quantity: rand.IntN(maxAmt)})
-		loot = append(loot, availableLoot{loot: Electronics, quantity: rand.IntN(maxAmt)})
-		loot = append(loot, availableLoot{loot: Cars, quantity: rand.IntN(maxAmt)})
+		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt)})
+		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt)})
+		loot = append(loot, Loot{Type: Cars, Quantity: rand.IntN(maxAmt)})
 	case Bank:
-		loot = append(loot, availableLoot{loot: Jewelry, quantity: rand.IntN(maxAmt * 3)})
-		loot = append(loot, availableLoot{loot: Money, quantity: rand.IntN(maxAmt * 3)})
+		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 3)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 3)})
 	case Museum:
-		loot = append(loot, availableLoot{loot: Jewelry, quantity: rand.IntN(maxAmt * 2)})
-		loot = append(loot, availableLoot{loot: Art, quantity: rand.IntN(maxAmt * 2)})
+		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2)})
+		loot = append(loot, Loot{Type: Art, Quantity: rand.IntN(maxAmt * 2)})
 	case Hotel:
-		loot = append(loot, availableLoot{loot: Jewelry, quantity: rand.IntN(maxAmt)})
-		loot = append(loot, availableLoot{loot: Money, quantity: rand.IntN(maxAmt * 2)})
-		loot = append(loot, availableLoot{loot: Electronics, quantity: rand.IntN(maxAmt * 2)})
+		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2)})
+		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 2)})
 	case Store:
-		loot = append(loot, availableLoot{loot: Money, quantity: rand.IntN(maxAmt * 3)})
-		loot = append(loot, availableLoot{loot: Electronics, quantity: rand.IntN(maxAmt * 3)})
-		loot = append(loot, availableLoot{loot: Cars, quantity: rand.IntN(maxAmt * 3)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 3)})
+		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 3)})
+		loot = append(loot, Loot{Type: Cars, Quantity: rand.IntN(maxAmt * 3)})
 	case Business:
-		loot = append(loot, availableLoot{loot: Money, quantity: rand.IntN(maxAmt)})
-		loot = append(loot, availableLoot{loot: Electronics, quantity: rand.IntN(maxAmt * 4)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt)})
+		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 4)})
 	}
 	return loot
 }

@@ -1,7 +1,9 @@
 package gamelogic
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"slices"
 
 	"github.com/samber/lo"
@@ -12,11 +14,14 @@ import (
 )
 
 type GameState struct {
+	Scanner   *bufio.Scanner
 	Day       int
 	TimeOfDay times.TimeOfDay
+	Player    Player
 	Places    []gameobjects.Location
 	People    []gameobjects.Character
 	Criminals []enemies.Enemy
+	Crimes    []Crime
 }
 
 func (gs GameState) PrintDay() {
@@ -33,7 +38,7 @@ func (gs GameState) GetLocationsByType(locTypes []gameobjects.LocationType) []ga
 	})
 }
 
-func (gs GameState) GetLocationsByLoot(loots []gameobjects.Loot) []gameobjects.Location {
+func (gs GameState) GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location {
 	return lo.Filter(gs.Places, func(loc gameobjects.Location, i int) bool {
 		for _, loot := range loots {
 			if slices.Contains(loc.GetAvailableLoot(), loot) {
@@ -53,6 +58,15 @@ func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, chara
 	}
 }
 
+func (gs *GameState) CreateCrime(location gameobjects.Location, loot []gameobjects.Loot) {
+
+	gs.Crimes = append(gs.Crimes, Crime{
+		Day:        gs.Day,
+		TimeOfDay:  gs.TimeOfDay,
+		StolenLoot: loot,
+	})
+}
+
 func (gs *GameState) Update() {
 
 	// Reset location visitors
@@ -61,6 +75,11 @@ func (gs *GameState) Update() {
 	}
 	for i := range gs.Criminals {
 		gs.Criminals[i].PerformAction(gs)
+		if gs.Criminals[i].Goal.Progress >= gs.Criminals[i].Goal.Target {
+			fmt.Printf("%s %s has gathered enough loot and gone to ground.\n", gs.Criminals[i].Character.Name.First, gs.Criminals[i].Character.Name.Last)
+			fmt.Println("You have failed!")
+			os.Exit(0)
+		}
 	}
 	for _, place := range gs.Places {
 		if len(place.Visitors) > 0 {

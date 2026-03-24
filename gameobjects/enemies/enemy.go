@@ -34,15 +34,19 @@ func (e Enemy) HasTarget() bool {
 	return e.Target != nil
 }
 
-func (e Enemy) GetPreferredLoot() []gameobjects.Loot {
-	loot := []gameobjects.Loot{}
+func (e Enemy) GetPreferredLoot() []gameobjects.LootType {
+	loot := []gameobjects.LootType{}
 	for _, profLoot := range e.Profile.PreferredLoot {
 		if !slices.Contains(loot, profLoot) {
 			loot = append(loot, profLoot)
 		}
-
 	}
 	return loot
+}
+
+func (e *Enemy) UpdateLoot(lootType gameobjects.LootType, amt int) {
+	value := lootType.GetValue() * amt
+	e.Goal.Progress += value
 }
 
 func (e *Enemy) PerformAction(gs HasLocations) {
@@ -53,24 +57,28 @@ func (e *Enemy) PerformAction(gs HasLocations) {
 	} else if !e.HasTarget() {
 		// If no target is currently selected, find a desirable target and assign it
 		e.Action = CreateReconAction()
-		targets := gs.GetLocationsByLoot(e.GetPreferredLoot())
+		targets := gs.GetLocationsByLootType(e.GetPreferredLoot())
 		target := targets[rand.IntN(len(targets))]
 		e.Target = &target
 	} else {
 		e.Action = e.Profile.Action
 	}
 	// Perform the selected action
-	e.Action.Act(&gs, e)
+	e.Action.Act(gs, e)
 }
 
 func CreateEnemy(char nameapi.Character) Enemy {
 	return Enemy{
 		Character: gameobjects.CreateRandomCharacter(char),
-		Address:   gameobjects.CreateLocation(char.Location, gameobjects.Hotel),
+		Address:   gameobjects.CreateLocation(char.Location, gameobjects.Hotel, true),
 		Profile:   createBurglar(),
 		Personality: []PersonalityTrait{
 			createProfligate(),
 		},
 		Freelancer: true,
+		Goal: Goal{
+			Progress: 0,
+			Target:   100,
+		},
 	}
 }
