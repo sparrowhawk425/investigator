@@ -5,6 +5,8 @@ import (
 	"github.com/sparrowhawk425/investigators/times"
 )
 
+// TODO: Convert these to Roles? Generic for use by both NPCs and Criminals? Behaviors are similar, but not the same. Security Guard doesn't have preferred loot.
+
 type Profile struct {
 	Name            string
 	ActiveDuring    times.TimeOfDay

@@ -14,6 +14,14 @@ var LootTypeList = []LootType{
 	Jewelry, Money, Art, Electronics, Cars,
 }
 
+func (lt LootType) IsType() bool {
+	return true
+}
+
+func (lt LootType) String() string {
+	return string(lt)
+}
+
 func (lt LootType) GetValue() int {
 	switch lt {
 	case Jewelry:

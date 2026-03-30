@@ -57,14 +57,18 @@ func (e *Enemy) PerformAction(gs HasLocations) {
 	} else if !e.HasTarget() {
 		// If no target is currently selected, find a desirable target and assign it
 		e.Action = CreateReconAction()
-		targets := gs.GetLocationsByLootType(e.GetPreferredLoot())
-		target := targets[rand.IntN(len(targets))]
-		e.Target = &target
+		e.findTarget(gs)
 	} else {
 		e.Action = e.Profile.Action
 	}
 	// Perform the selected action
 	e.Action.Act(gs, e)
+}
+
+func (e *Enemy) findTarget(gs HasLocations) {
+	targets := gs.GetLocationsByLootType(e.GetPreferredLoot())
+	target := targets[rand.IntN(len(targets))]
+	e.Target = &target
 }
 
 func CreateEnemy(char nameapi.Character) Enemy {
@@ -78,7 +82,7 @@ func CreateEnemy(char nameapi.Character) Enemy {
 		Freelancer: true,
 		Goal: Goal{
 			Progress: 0,
-			Target:   100,
+			Target:   500,
 		},
 	}
 }

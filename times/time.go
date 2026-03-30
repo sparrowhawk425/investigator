@@ -24,7 +24,7 @@ func TransitionTimeOfDay(tod TimeOfDay) TimeOfDay {
 	return tod
 }
 
-func GetTimeOfDayName(tod TimeOfDay) string {
+func (tod TimeOfDay) GetName() string {
 	switch tod {
 	case Morning:
 		return "Morning"

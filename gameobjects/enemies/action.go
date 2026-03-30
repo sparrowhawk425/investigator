@@ -79,15 +79,20 @@ func BurgleAction(locations HasLocations, enemy *Enemy) {
 		// Take a random amount of the available loot
 		if maxLoot > 0 {
 			amt := rand.IntN(maxLoot + 1)
-			enemy.Target.UpdateLoot(lootType, -1*amt)
-			enemy.UpdateLoot(lootType, amt)
-			stolenLoot = append(stolenLoot, gameobjects.Loot{
-				Type:     lootType,
-				Quantity: amt,
-			})
+			if amt > 0 {
+				enemy.Target.UpdateLoot(lootType, -1*amt)
+				enemy.UpdateLoot(lootType, amt)
+				stolenLoot = append(stolenLoot, gameobjects.Loot{
+					Type:     lootType,
+					Quantity: amt,
+				})
+			}
 		}
 	}
-	locations.CreateCrime(*enemy.Target, stolenLoot)
+	if len(stolenLoot) > 0 {
+		locations.CreateCrime(*enemy.Target, stolenLoot)
+	}
+
 	// Enemy needs new target
 	enemy.Target = nil
 }

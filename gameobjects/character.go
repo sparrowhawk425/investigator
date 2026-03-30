@@ -1,6 +1,7 @@
 package gameobjects
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"strings"
 	"time"
@@ -11,36 +12,65 @@ import (
 type EyeColor string
 
 const (
-	Blue   EyeColor = "Blue"
-	Green  EyeColor = "Green"
-	Brown  EyeColor = "Brown"
-	Amber  EyeColor = "Amber"
-	Hazel  EyeColor = "Hazel"
-	Gray_E EyeColor = "Gray"
+	BlueEyes    EyeColor = "Blue"
+	GreenEyes   EyeColor = "Green"
+	BrownEyes   EyeColor = "Brown"
+	AmberEyes   EyeColor = "Amber"
+	HazelEyes   EyeColor = "Hazel"
+	GrayEyes    EyeColor = "Gray"
+	UnknownEyes EyeColor = "Unknown"
 	// Red/Violet (due to albinism)?
 	// Heterochromia?
 )
 
 var EyeColors = []EyeColor{
-	Blue, Green, Brown, Amber, Hazel, Gray_E,
+	BlueEyes, GreenEyes, BrownEyes, AmberEyes, HazelEyes, GrayEyes,
 }
 
 type HairColor string
 
 const (
-	Blond       HairColor = "Blond"
-	DarkBlond   HairColor = "Dark Blond"
-	MediumBrown HairColor = "Medium Brown"
-	DarkBrown   HairColor = "Dark Brown"
-	Black       HairColor = "Black"
-	Auburn      HairColor = "Auburn"
-	Red         HairColor = "Red"
-	Gray_H      HairColor = "Gray"
-	White       HairColor = "White"
+	BlondHair        HairColor = "Blond"
+	DarkBlondHair    HairColor = "Dark Blond"
+	MediumBrownHair  HairColor = "Medium Brown"
+	DarkBrownHair    HairColor = "Dark Brown"
+	BlackHair        HairColor = "Black"
+	AuburnHair       HairColor = "Auburn"
+	RedHair          HairColor = "Red"
+	GrayHair         HairColor = "Gray"
+	WhiteHair        HairColor = "White"
+	UnknownHairColor HairColor = "Unknown"
 )
 
 var HairColors = []HairColor{
-	Blond, DarkBlond, MediumBrown, DarkBrown, Black, Auburn, Red, Gray_H, White,
+	BlondHair, DarkBlondHair, MediumBrownHair, DarkBrownHair, BlackHair, AuburnHair, RedHair, GrayHair, WhiteHair,
+}
+
+type ShoeSize string
+
+const (
+	SmallShoe   ShoeSize = "Small"
+	MediumShoe  ShoeSize = "Medium"
+	LargeShoe   ShoeSize = "Large"
+	UnknownShoe ShoeSize = "Unknown"
+)
+
+var ShoeSizes = []ShoeSize{
+	SmallShoe, MediumShoe, LargeShoe,
+}
+
+type HairLength string
+
+const (
+	BaldHair          HairLength = "Bald"
+	ShortHair         HairLength = "Short"
+	MediumHair        HairLength = "Medium"
+	LongHair          HairLength = "Long"
+	UnknownHairLength HairLength = "Unknown"
+)
+
+var HairLengths = []HairLength{
+	BaldHair, ShortHair, MediumHair, LongHair,
 }
 
 type DateOfBirth struct {
@@ -56,16 +86,58 @@ type Characteristics struct {
 	HairColor   HairColor
 	Height      int //cm
 	Weight      int //lb
+	ShoeSize    ShoeSize
+	HairLength  HairLength
 }
 
-type Name struct {
-	First string
-	Last  string
+type name struct {
+	first string
+	last  string
 }
 
 type Character struct {
-	Name   Name
+	name   name
 	Traits Characteristics
+}
+
+func (c Character) GetName() string {
+	return fmt.Sprintf("%s %s", c.name.first, c.name.last)
+}
+
+func (c Character) GetFirstName() string {
+	return c.name.first
+}
+
+func (c Character) GetLastName() string {
+	return c.name.last
+}
+
+func (c *Character) SetName(first, last string) {
+	c.name.first = first
+	c.name.last = last
+}
+
+func (c *Character) SetFirstName(first string) {
+	c.name.first = first
+}
+
+func (c *Character) SetLastName(last string) {
+	c.name.last = last
+}
+
+func (c Character) Print() {
+
+	fmt.Printf("  First Name: %s\n", c.GetFirstName())
+	fmt.Printf("  Last Name: %s\n", c.GetLastName())
+	fmt.Printf("  Gender: %s\n", c.Traits.Gender)
+	fmt.Printf("  Nationality: %s\n", c.Traits.Nationality)
+	fmt.Printf("  Age: %d\n", c.Traits.Dob.Age)
+	fmt.Printf("  Height: %d cm\n", c.Traits.Height)
+	fmt.Printf("  Weight: %d lb\n", c.Traits.Weight)
+	fmt.Printf("  Eye Color: %s\n", c.Traits.EyeColor)
+	fmt.Printf("  Hair Color: %s\n", c.Traits.HairColor)
+	fmt.Printf("  Hair Length: %s\n", c.Traits.HairLength)
+	fmt.Printf("  Shoe Size: %s\n", c.Traits.ShoeSize)
 }
 
 func CreateRandomCharacter(apiChar nameapi.Character) Character {
@@ -73,9 +145,9 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 	eyeColor := EyeColors[rand.IntN(len(EyeColors))]
 	hairColor := HairColors[rand.IntN(len(HairColors))]
 	return Character{
-		Name: Name{
-			First: apiChar.Name.First,
-			Last:  apiChar.Name.Last,
+		name: name{
+			first: apiChar.Name.First,
+			last:  apiChar.Name.Last,
 		},
 		Traits: Characteristics{
 			Dob: DateOfBirth{
@@ -88,6 +160,8 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			Gender:      apiChar.Gender,
 			Height:      getHeight(apiChar.Gender),
 			Weight:      getWeight(apiChar.Gender),
+			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],
+			HairLength:  HairLengths[rand.IntN(len(HairLengths))],
 		},
 	}
 }

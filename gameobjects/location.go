@@ -19,19 +19,28 @@ const (
 	Bank      LocationType = "Bank"
 	Museum    LocationType = "Museum"
 	Business  LocationType = "Business"
+	Casino    LocationType = "Casino"
 )
 
-var locationTypes = []LocationType{
-	Residence, Hotel, Store, Bank, Museum, Business,
+var LocationTypes = []LocationType{
+	Residence, Hotel, Store, Bank, Museum, Business, Casino,
+}
+
+func (LocationType) IsType() bool {
+	return true
+}
+
+func (lt LocationType) String() string {
+	return string(lt)
 }
 
 func GetLocationType(locTypeStr string) (LocationType, error) {
-	types := lo.Map(locationTypes, func(lt LocationType, i int) string {
+	types := lo.Map(LocationTypes, func(lt LocationType, i int) string {
 		return strings.ToLower(string(lt))
 	})
 	idx := slices.Index(types, locTypeStr)
 	if idx != -1 {
-		return locationTypes[idx], nil
+		return LocationTypes[idx], nil
 	}
 	return "", fmt.Errorf("Unexpected LocationType: %s", locTypeStr)
 }
@@ -44,10 +53,31 @@ type Address struct {
 type Quality int
 
 const (
-	cheap Quality = iota
-	moderate
-	expensive
+	Cheap Quality = iota
+	Moderate
+	Expensive
 )
+
+var QualityTypes = []Quality{
+	Cheap, Moderate, Expensive,
+}
+
+func (Quality) IsType() bool {
+	return true
+}
+
+func (q Quality) String() string {
+	switch q {
+	case Cheap:
+		return "Cheap"
+	case Moderate:
+		return "Moderate"
+	case Expensive:
+		return "Expensive"
+	default:
+		return "Indescribable"
+	}
+}
 
 type Location struct {
 	Type     LocationType
@@ -89,7 +119,11 @@ func (loc Location) Equals(other Location) bool {
 	return true
 }
 func (loc Location) GetAddress() string {
-	return fmt.Sprintf("%d %s\n\t%s, %s", loc.Address.Number, loc.Address.Name, loc.City, loc.State)
+	return fmt.Sprintf("%s %s:\n\t%d %s\n\t%s, %s", loc.quality.String(), loc.Type, loc.Address.Number, loc.Address.Name, loc.City, loc.State)
+}
+
+func (loc Location) GetQuality() string {
+	return loc.quality.String()
 }
 
 func (loc Location) GetAvailableLoot() []LootType {
@@ -100,19 +134,6 @@ func (loc Location) GetAvailableLoot() []LootType {
 		}
 	}
 	return available
-}
-
-func (loc Location) GetQuality() string {
-	switch loc.quality {
-	case cheap:
-		return "Cheap"
-	case moderate:
-		return "Moderate"
-	case expensive:
-		return "Expensive"
-	default:
-		return "Indescribable"
-	}
 }
 
 func (loc Location) GetLootAmount(lootType LootType) int {
@@ -132,6 +153,37 @@ func (loc *Location) UpdateLoot(lootType LootType, amount int) {
 		}
 	}
 }
+
+func (loc Location) String() string {
+	return loc.GetAddress()
+}
+
+// Filters
+
+func FilterLocationsByType(locTypes []LocationType) func(Location, int) bool {
+	return func(loc Location, _ int) bool {
+		return slices.Contains(locTypes, loc.Type)
+	}
+}
+
+func FilterLocationsByLootType(lootTypes []LootType) func(Location, int) bool {
+	return func(loc Location, _ int) bool {
+		for _, lootType := range lootTypes {
+			if slices.Contains(loc.GetAvailableLoot(), lootType) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func FilterLocationsByQuality(quality []Quality) func(Location, int) bool {
+	return func(loc Location, _ int) bool {
+		return slices.Contains(quality, loc.quality)
+	}
+}
+
+// Helpers
 
 func CreateLocation(fromLoc nameapi.Location, locType LocationType, isOccupied bool) Location {
 	qual := Quality(rand.IntN(3))
@@ -155,7 +207,7 @@ func CreateLocation(fromLoc nameapi.Location, locType LocationType, isOccupied b
 func CreateRandomLocations(apiLocations []nameapi.Location) []Location {
 	locations := make([]Location, len(apiLocations))
 	for i, apiLoc := range apiLocations {
-		locType := locationTypes[rand.IntN(len(locationTypes))]
+		locType := LocationTypes[rand.IntN(len(LocationTypes))]
 		occupiedPct := rand.IntN(100)
 		locations[i] = CreateLocation(apiLoc, locType, occupiedPct > 10)
 	}
@@ -173,11 +225,11 @@ func parsePostCode(data []byte) string {
 func setAvailableLoot(locType LocationType, quality Quality) []Loot {
 	maxAmt := 1
 	switch quality {
-	case cheap:
+	case Cheap:
 		maxAmt = 2
-	case moderate:
+	case Moderate:
 		maxAmt = 6
-	case expensive:
+	case Expensive:
 		maxAmt = 10
 	}
 	loot := []Loot{}
@@ -194,16 +246,19 @@ func setAvailableLoot(locType LocationType, quality Quality) []Loot {
 		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2)})
 		loot = append(loot, Loot{Type: Art, Quantity: rand.IntN(maxAmt * 2)})
 	case Hotel:
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt)})
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2)})
+		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt)})
 		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 2)})
 	case Store:
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 3)})
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2)})
 		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 3)})
 		loot = append(loot, Loot{Type: Cars, Quantity: rand.IntN(maxAmt * 3)})
 	case Business:
 		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt)})
 		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 4)})
+	case Casino:
+		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 4)})
+		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 4)})
 	}
 	return loot
 }

@@ -6,8 +6,9 @@ import (
 
 	"github.com/sparrowhawk425/investigators/gamelogic"
 	"github.com/sparrowhawk425/investigators/gameobjects"
-	"github.com/sparrowhawk425/investigators/internal/functions"
 )
+
+// TODO: Use argparse package? https://pkg.go.dev/github.com/akamensky/argparse
 
 // Callback performs command action. Returns true if time should be updated
 type cliCommand struct {
@@ -42,6 +43,18 @@ func GetCommandMap() map[string]cliCommand {
 			description:  "List the people",
 			advancesTime: false,
 			Callback:     commandPeople,
+		},
+		"crimes": {
+			name:         "crimes",
+			description:  "List the crimes that have occurred",
+			advancesTime: false,
+			Callback:     commandCrimes,
+		},
+		"dossiers": {
+			name:         "dossiers",
+			description:  "View your dossiers",
+			advancesTime: false,
+			Callback:     commandDossiers,
 		},
 		"next": {
 			name:         "next",
@@ -86,9 +99,16 @@ func commandHelp(gs *gamelogic.GameState, _ []string) (bool, error) {
 	return false, nil
 }
 
+// TODO: Menu with filtering?
 func commandLocations(gs *gamelogic.GameState, params []string) (bool, error) {
 	locations := gs.Places
 	if len(params) > 0 {
+		if params[0] != "filter" {
+			return false, fmt.Errorf("Unexpected argument '%s'", params[0])
+		}
+		//filters := getFilters()
+		//locations = gs.GetLocations(filters)
+
 		locTypes := []gameobjects.LocationType{}
 		for _, param := range params {
 			locType, err := gameobjects.GetLocationType(param)
@@ -128,7 +148,7 @@ func commandLocations(gs *gamelogic.GameState, params []string) (bool, error) {
 
 func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
 	for _, person := range gs.People {
-		fmt.Printf("%s %s, %s:\n", person.Name.First, person.Name.Last, person.Traits.Gender)
+		fmt.Printf("%s, %s:\n", person.GetName(), person.Traits.Gender)
 		fmt.Printf("Age: %d\n", person.Traits.Dob.Age)
 		fmt.Printf("Eyes: %s\n", person.Traits.EyeColor)
 		fmt.Printf("Hair: %s\n", person.Traits.HairColor)
@@ -140,14 +160,26 @@ func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
 	return false, nil
 }
 
+func commandCrimes(gs *gamelogic.GameState, _ []string) (bool, error) {
+	fmt.Println("Reported Crimes:")
+	for _, crime := range gs.Crimes {
+		crime.Print()
+	}
+	return false, nil
+}
+
 func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	locations := []string{}
 	for _, location := range gs.Places {
 		locations = append(locations, location.GetAddress())
 	}
-	idx := functions.MenuSelect(gs.Scanner, "Choose a location:", locations)
+
+	//idx := functions.MenuSelect(gs.Scanner, "Choose a location:", locations)
+	filterTypes := []gamelogic.FilterType{gameobjects.Residence, gameobjects.Cheap, gameobjects.Jewelry}
+
+	idx := gamelogic.CreateFilterableMenu(gs.Scanner, "Choose a location:", gs.Places, filterTypes)
 	loc := gs.Places[idx]
-	fmt.Printf("%s (%s)\n", loc.GetAddress(), loc.Type)
+	fmt.Println(loc.GetAddress())
 	fmt.Println("Loot:")
 	for _, loot := range loc.GetAvailableLoot() {
 		amt := loc.GetLootAmount(loot)
@@ -160,11 +192,11 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 func commandEnemy(gs *gamelogic.GameState, _ []string) (bool, error) {
 	criminals := []string{}
 	for _, enemy := range gs.Criminals {
-		criminals = append(criminals, fmt.Sprintf("%s %s", enemy.Character.Name.First, enemy.Character.Name.Last))
+		criminals = append(criminals, fmt.Sprintf("%s", enemy.Character.GetName()))
 	}
-	idx := functions.MenuSelect(gs.Scanner, "Choose a criminal:", criminals)
+	idx := gamelogic.MenuSelect(gs.Scanner, "Choose a criminal:", criminals)
 	c := gs.Criminals[idx]
-	fmt.Printf("%s %s\n", c.Character.Name.First, c.Character.Name.Last)
+	c.Character.Print()
 	fmt.Printf("Progress: %d / %d\n", c.Goal.Progress, c.Goal.Target)
 
 	return false, nil

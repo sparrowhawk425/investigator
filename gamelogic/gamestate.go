@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
 
 	"github.com/samber/lo"
 
@@ -25,7 +24,7 @@ type GameState struct {
 }
 
 func (gs GameState) PrintDay() {
-	fmt.Printf("Day: %d Time: %s\n", gs.Day, times.GetTimeOfDayName(gs.TimeOfDay))
+	fmt.Printf("Day: %d Time: %s\n", gs.Day, gs.TimeOfDay.GetName())
 }
 
 func (gs GameState) GetTimeOfDay() times.TimeOfDay {
@@ -33,20 +32,23 @@ func (gs GameState) GetTimeOfDay() times.TimeOfDay {
 }
 
 func (gs GameState) GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location {
-	return lo.Filter(gs.Places, func(loc gameobjects.Location, i int) bool {
-		return slices.Contains(locTypes, loc.Type)
-	})
+	filters := []func(gameobjects.Location, int) bool{}
+	filters = append(filters, gameobjects.FilterLocationsByType(locTypes))
+	return gs.GetLocations(filters)
 }
 
-func (gs GameState) GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location {
-	return lo.Filter(gs.Places, func(loc gameobjects.Location, i int) bool {
-		for _, loot := range loots {
-			if slices.Contains(loc.GetAvailableLoot(), loot) {
-				return true
-			}
-		}
-		return false
-	})
+func (gs GameState) GetLocationsByLootType(lootTypes []gameobjects.LootType) []gameobjects.Location {
+	filters := []func(gameobjects.Location, int) bool{}
+	filters = append(filters, gameobjects.FilterLocationsByLootType(lootTypes))
+	return gs.GetLocations(filters)
+}
+
+func (gs GameState) GetLocations(filters []func(gameobjects.Location, int) bool) []gameobjects.Location {
+	locations := gs.Places
+	for _, filter := range filters {
+		locations = lo.Filter(locations, filter)
+	}
+	return locations
 }
 
 func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, character gameobjects.Character) {
@@ -63,6 +65,7 @@ func (gs *GameState) CreateCrime(location gameobjects.Location, loot []gameobjec
 	gs.Crimes = append(gs.Crimes, Crime{
 		Day:        gs.Day,
 		TimeOfDay:  gs.TimeOfDay,
+		Location:   location,
 		StolenLoot: loot,
 	})
 }
@@ -76,7 +79,7 @@ func (gs *GameState) Update() {
 	for i := range gs.Criminals {
 		gs.Criminals[i].PerformAction(gs)
 		if gs.Criminals[i].Goal.Progress >= gs.Criminals[i].Goal.Target {
-			fmt.Printf("%s %s has gathered enough loot and gone to ground.\n", gs.Criminals[i].Character.Name.First, gs.Criminals[i].Character.Name.Last)
+			fmt.Printf("%s has gathered enough loot and gone to ground.\n", gs.Criminals[i].Character.GetName())
 			fmt.Println("You have failed!")
 			os.Exit(0)
 		}
@@ -84,7 +87,7 @@ func (gs *GameState) Update() {
 	for _, place := range gs.Places {
 		if len(place.Visitors) > 0 {
 			for _, visitor := range place.Visitors {
-				fmt.Printf("%s %s is visiting %d %s\n", visitor.Name.First, visitor.Name.Last, place.Address.Number, place.Address.Name)
+				fmt.Printf("%s is visiting %d %s\n", visitor.GetName(), place.Address.Number, place.Address.Name)
 			}
 		}
 	}

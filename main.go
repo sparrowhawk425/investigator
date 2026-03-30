@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/samber/lo"
 
@@ -25,11 +24,13 @@ func main() {
 		Day:       1,
 		TimeOfDay: times.Morning,
 	}
+	fmt.Print("What is your name, investigator? > ")
+	scanner.Scan()
+	name := scanner.Text()
+	fmt.Printf("Welcome to International Investigators, %s!\n", name)
 	// Select country
-	countryNames := lo.Map(nameapi.Countries, func(country nameapi.Country, i int) string {
-		return country.Name
-	})
-	idx := functions.MenuSelect(scanner, "Select a Country to begin your investigation:", countryNames)
+	countryNames := lo.Map(nameapi.Countries, func(country nameapi.Country, i int) string { return country.Name })
+	idx := gamelogic.MenuSelect(scanner, "Select a Country to begin your investigation:", countryNames)
 	country := nameapi.Countries[idx]
 	fmt.Printf("Travelling to %s...\n", country.Name)
 	nameResults, err := nameapi.MakeHTTPGetRequest(country, 1)
@@ -38,7 +39,7 @@ func main() {
 	}
 	char := nameResults[0]
 	target := enemies.CreateEnemy(char)
-	fmt.Printf("Hunting for %s %s, known %s\n", target.Character.Name.First, target.Character.Name.Last, target.Profile.Name)
+	fmt.Printf("Hunting for %s, known %s\n", target.Character.GetName(), target.Profile.Name)
 
 	// Add locations and people to game
 	gameState.Criminals = append(gameState.Criminals, target)
@@ -65,7 +66,7 @@ func main() {
 		// Get player input
 		fmt.Print("What do you wish to do? > ")
 		scanner.Scan()
-		cleanText := cleanInput(scanner.Text())
+		cleanText := functions.CleanInput(scanner.Text())
 
 		// Run command
 		update := false
@@ -82,9 +83,4 @@ func main() {
 			gameState.Update()
 		}
 	}
-}
-
-// Remove excess space, split input and make it lowercase
-func cleanInput(text string) []string {
-	return strings.Fields(strings.ToLower(text))
 }

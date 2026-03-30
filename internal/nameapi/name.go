@@ -15,13 +15,13 @@ type Country struct {
 	Code string
 }
 
+// Iran names are in Arabic, so probably a little hard to read for English-based game
 var Countries = []Country{
 	{Name: "Australia", Code: "AU"}, {Name: "Brazil", Code: "BR"}, {Name: "Canada", Code: "CA"}, {Name: "Switzerland", Code: "CH"},
 	{Name: "Germany", Code: "DE"}, {Name: "Denmark", Code: "DK"}, {Name: "Spain", Code: "ES"}, {Name: "Finland", Code: "FI"},
 	{Name: "France", Code: "FR"}, {Name: "Great Britain", Code: "GB"}, {Name: "Ireland", Code: "IE"}, {Name: "India", Code: "IN"},
-	{Name: "Iran", Code: "IR"}, {Name: "Mexico", Code: "MX"}, {Name: "Netherlands", Code: "NL"}, {Name: "Norway", Code: "NO"},
-	{Name: "New Zealand", Code: "NZ"}, {Name: "Serbia", Code: "RS"}, {Name: "Türkiye", Code: "TR"}, {Name: "Ukraine", Code: "UA"},
-	{Name: "United States", Code: "US"},
+	{Name: "Mexico", Code: "MX"}, {Name: "Netherlands", Code: "NL"}, {Name: "Norway", Code: "NO"}, {Name: "New Zealand", Code: "NZ"},
+	{Name: "Serbia", Code: "RS"}, {Name: "Türkiye", Code: "TR"}, {Name: "Ukraine", Code: "UA"}, {Name: "United States", Code: "US"},
 }
 
 const nameApi = "https://randomuser.me/api"
