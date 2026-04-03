@@ -3,12 +3,10 @@ package gamelogic
 import (
 	"bufio"
 	"fmt"
-	"os"
 
 	"github.com/samber/lo"
 
 	"github.com/sparrowhawk425/investigators/gameobjects"
-	"github.com/sparrowhawk425/investigators/gameobjects/enemies"
 	"github.com/sparrowhawk425/investigators/times"
 )
 
@@ -19,8 +17,8 @@ type GameState struct {
 	Player    Player
 	Places    []gameobjects.Location
 	People    []gameobjects.Character
-	Criminals []enemies.Enemy
-	Crimes    []Crime
+	//Criminals []enemies.Enemy
+	Crimes []Crime
 }
 
 func (gs GameState) PrintDay() {
@@ -76,13 +74,13 @@ func (gs *GameState) Update() {
 	for i := range gs.Places {
 		gs.Places[i].Visitors = []gameobjects.Character{}
 	}
-	for i := range gs.Criminals {
-		gs.Criminals[i].PerformAction(gs)
-		if gs.Criminals[i].Goal.Progress >= gs.Criminals[i].Goal.Target {
-			fmt.Printf("%s has gathered enough loot and gone to ground.\n", gs.Criminals[i].Character.GetName())
-			fmt.Println("You have failed!")
-			os.Exit(0)
-		}
+	for i := range gs.People {
+		gs.People[i].PerformAction(gs)
+		// if gs.People[i].Goal.Progress >= gs.Criminals[i].Goal.Target {
+		// 	fmt.Printf("%s has gathered enough loot and gone to ground.\n", gs.Criminals[i].Character.GetName())
+		// 	fmt.Println("You have failed!")
+		// 	os.Exit(0)
+		// }
 	}
 	for _, place := range gs.Places {
 		if len(place.Visitors) > 0 {

@@ -17,8 +17,9 @@ type Dossier struct {
 }
 
 type Player struct {
-	Name     string
-	Dossiers []Dossier
+	Name            string
+	CurrentLocation gameobjects.Location
+	Dossiers        []Dossier
 }
 
 const unknown = "Unknown"
@@ -33,6 +34,8 @@ func (p *Player) CreateDossier(scanner *bufio.Scanner) {
 			Dob:         gameobjects.DateOfBirth{},
 			Nationality: unknown,
 			Gender:      unknown,
+			Height:      gameobjects.UnknownHeight,
+			Weight:      gameobjects.UnknownWeight,
 			EyeColor:    gameobjects.UnknownEyes,
 			HairColor:   gameobjects.UnknownHairColor,
 			ShoeSize:    gameobjects.UnknownShoe,
@@ -129,9 +132,13 @@ func (d *Dossier) UpdateCharacter(scanner *bufio.Scanner) {
 			scanner.Scan()
 			d.Target.Traits.Nationality = scanner.Text()
 		case cHeight:
-			d.Target.Traits.Height = getNum(scanner, "Height: ")
+			fmt.Print("Height: ")
+			scanner.Scan()
+			d.Target.Traits.Height = gameobjects.Height(scanner.Text())
 		case cWeight:
-			d.Target.Traits.Weight = getNum(scanner, "Weight: ")
+			fmt.Print("Weight: ")
+			scanner.Scan()
+			d.Target.Traits.Weight = gameobjects.Weight(scanner.Text())
 		case cEyeColor:
 			idx = MenuSelect(scanner, "Eye Color:", lo.Map(gameobjects.EyeColors, func(ec gameobjects.EyeColor, _ int) string { return string(ec) }))
 			d.Target.Traits.EyeColor = gameobjects.EyeColors[idx]
@@ -184,16 +191,8 @@ func (d Dossier) PrintCharacter() {
 	} else {
 		fmt.Printf("  Age: %d\n", d.Target.Traits.Dob.Age)
 	}
-	if d.Target.Traits.Height == 0 {
-		fmt.Println("  Height: Unknown")
-	} else {
-		fmt.Printf("  Height: %d cm\n", d.Target.Traits.Height)
-	}
-	if d.Target.Traits.Weight == 0 {
-		fmt.Println("  Weight: Unknown")
-	} else {
-		fmt.Printf("  Weight: %d lb\n", d.Target.Traits.Weight)
-	}
+	fmt.Printf("  Height: %s\n", d.Target.Traits.Height)
+	fmt.Printf("  Weight: %s\n", d.Target.Traits.Weight)
 	fmt.Printf("  Eye Color: %s\n", d.Target.Traits.EyeColor)
 	fmt.Printf("  Hair Color: %s\n", d.Target.Traits.HairColor)
 	fmt.Printf("  Hair Length: %s\n", d.Target.Traits.HairLength)

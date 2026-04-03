@@ -88,10 +88,11 @@ type Location struct {
 	PostCode string
 
 	IsOccupied bool
-	quality    Quality
-	loot       []Loot
+	Visitors   []Character
 
-	Visitors []Character
+	quality Quality
+	loot    []Loot
+	clues   []string
 }
 
 func (loc Location) Equals(other Location) bool {
@@ -152,6 +153,42 @@ func (loc *Location) UpdateLoot(lootType LootType, amount int) {
 			return
 		}
 	}
+}
+
+func (loc *Location) AddClue(clue string) {
+	loc.clues = append(loc.clues, clue)
+}
+
+func (loc Location) GetClues() []string {
+	return loc.clues
+}
+
+func (loc Location) GetRiskPercent() int {
+	risk := 1
+	switch loc.Type {
+	case Residence:
+		risk = 10
+	case Store:
+		risk = 15
+	case Hotel:
+		risk = 20
+	case Bank:
+		risk = 25
+	case Museum:
+		risk = 20
+	case Business:
+		risk = 15
+	case Casino:
+		risk = 30
+	}
+	switch loc.quality {
+	case Moderate:
+		risk *= 2
+	case Expensive:
+		risk *= 3
+	}
+
+	return risk
 }
 
 func (loc Location) String() string {

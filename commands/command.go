@@ -68,12 +68,6 @@ func GetCommandMap() map[string]cliCommand {
 			advancesTime: true,
 			Callback:     commandVisitLocation,
 		},
-		"enemy": {
-			name:         "enemy",
-			description:  "Choose an enemy from a menu",
-			advancesTime: false,
-			Callback:     commandEnemy,
-		},
 	}
 	return commandMap
 }
@@ -152,9 +146,10 @@ func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
 		fmt.Printf("Age: %d\n", person.Traits.Dob.Age)
 		fmt.Printf("Eyes: %s\n", person.Traits.EyeColor)
 		fmt.Printf("Hair: %s\n", person.Traits.HairColor)
-		fmt.Printf("Height: %d\n", person.Traits.Height)
-		fmt.Printf("Weight: %d\n", person.Traits.Weight)
+		fmt.Printf("Height: %s\n", person.Traits.Height)
+		fmt.Printf("Weight: %s\n", person.Traits.Weight)
 		fmt.Printf("Nationality: %s\n", person.Traits.Nationality)
+		// TODO: Loot?
 		fmt.Println("")
 	}
 	return false, nil
@@ -179,27 +174,30 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 
 	idx := gamelogic.CreateFilterableMenu(gs.Scanner, "Choose a location:", gs.Places, filterTypes)
 	loc := gs.Places[idx]
+	gs.Player.CurrentLocation = loc
 	fmt.Println(loc.GetAddress())
-	fmt.Println("Loot:")
-	for _, loot := range loc.GetAvailableLoot() {
-		amt := loc.GetLootAmount(loot)
-		fmt.Printf("\t%s: %d\n", loot, amt)
+
+	if len(loc.Visitors) > 0 {
+		fmt.Println("People:")
+		for _, person := range loc.Visitors {
+			fmt.Printf(" - %s", person.GetName())
+		}
+	}
+	if len(loc.GetAvailableLoot()) > 0 {
+		fmt.Println("Loot:")
+		for _, loot := range loc.GetAvailableLoot() {
+			amt := loc.GetLootAmount(loot)
+			fmt.Printf(" - %s: %d\n", loot, amt)
+		}
+	}
+	if len(loc.GetClues()) > 0 {
+		fmt.Println("Clues:")
+		for _, clue := range loc.GetClues() {
+			fmt.Printf(" - %s", clue)
+		}
 	}
 
 	return true, nil
-}
-
-func commandEnemy(gs *gamelogic.GameState, _ []string) (bool, error) {
-	criminals := []string{}
-	for _, enemy := range gs.Criminals {
-		criminals = append(criminals, fmt.Sprintf("%s", enemy.Character.GetName()))
-	}
-	idx := gamelogic.MenuSelect(gs.Scanner, "Choose a criminal:", criminals)
-	c := gs.Criminals[idx]
-	c.Character.Print()
-	fmt.Printf("Progress: %d / %d\n", c.Goal.Progress, c.Goal.Target)
-
-	return false, nil
 }
 
 func commandNext(gs *gamelogic.GameState, _ []string) (bool, error) {

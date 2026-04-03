@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"os"
 
 	"github.com/samber/lo"
@@ -11,7 +12,6 @@ import (
 	"github.com/sparrowhawk425/investigators/commands"
 	"github.com/sparrowhawk425/investigators/gamelogic"
 	"github.com/sparrowhawk425/investigators/gameobjects"
-	"github.com/sparrowhawk425/investigators/gameobjects/enemies"
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
 	"github.com/sparrowhawk425/investigators/times"
@@ -24,7 +24,7 @@ func main() {
 		Day:       1,
 		TimeOfDay: times.Morning,
 	}
-	fmt.Print("What is your name, investigator? > ")
+	fmt.Print("What is your name, Investigator? > ")
 	scanner.Scan()
 	name := scanner.Text()
 	fmt.Printf("Welcome to International Investigators, %s!\n", name)
@@ -33,17 +33,9 @@ func main() {
 	idx := gamelogic.MenuSelect(scanner, "Select a Country to begin your investigation:", countryNames)
 	country := nameapi.Countries[idx]
 	fmt.Printf("Travelling to %s...\n", country.Name)
-	nameResults, err := nameapi.MakeHTTPGetRequest(country, 1)
-	if err != nil {
-		log.Fatalf("Error getting name from API: %v", err)
-	}
-	char := nameResults[0]
-	target := enemies.CreateEnemy(char)
-	fmt.Printf("Hunting for %s, known %s\n", target.Character.GetName(), target.Profile.Name)
 
 	// Add locations and people to game
-	gameState.Criminals = append(gameState.Criminals, target)
-	results, err := nameapi.MakeHTTPGetRequest(country, 10)
+	results, err := nameapi.MakeHTTPGetRequest(country, 20)
 	if err != nil {
 		log.Fatalf("Error getting locations from API: %v", err)
 	}
@@ -52,11 +44,19 @@ func main() {
 		gameState.People = append(gameState.People, gameobjects.CreateRandomCharacter(c))
 	}
 	// Create locations
-	apiLocations := lo.Map(results, func(character nameapi.Character, i int) nameapi.Location {
-		return character.Location
-	})
+	apiLocations := lo.Map(results, func(character nameapi.Character, i int) nameapi.Location { return character.Location })
 	locations := gameobjects.CreateRandomLocations(apiLocations)
 	gameState.Places = locations
+
+	// Set Work Targets
+	for i := range gameState.People {
+		gameState.People[i].FindTarget(&gameState)
+	}
+
+	i := rand.IntN(len(gameState.People))
+	gameState.People[i].Role = gameobjects.CreateBurglar()
+	target := gameState.People[i]
+	fmt.Printf("Hunting for %s, known %s\n", target.GetName(), target.Role.Name)
 
 	// REPL game loop
 	commands := commands.GetCommandMap()
