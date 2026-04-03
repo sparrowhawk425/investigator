@@ -149,7 +149,14 @@ func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
 		fmt.Printf("Height: %s\n", person.Traits.Height)
 		fmt.Printf("Weight: %s\n", person.Traits.Weight)
 		fmt.Printf("Nationality: %s\n", person.Traits.Nationality)
-		// TODO: Loot?
+		fmt.Printf("Job: %s\n", person.Role.Name)
+		possessions := person.GetPossessions()
+		if len(possessions) > 0 {
+			fmt.Println("Possessions:")
+			for _, item := range possessions {
+				fmt.Printf(" - %s: %d\n", item.Type, item.Quantity)
+			}
+		}
 		fmt.Println("")
 	}
 	return false, nil

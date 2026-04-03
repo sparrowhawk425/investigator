@@ -45,18 +45,19 @@ func main() {
 	}
 	// Create locations
 	apiLocations := lo.Map(results, func(character nameapi.Character, i int) nameapi.Location { return character.Location })
-	locations := gameobjects.CreateRandomLocations(apiLocations)
-	gameState.Places = locations
+	gameState.Places = gameobjects.CreateRandomLocations(apiLocations)
 
 	// Set Work Targets
 	for i := range gameState.People {
 		gameState.People[i].FindTarget(&gameState)
 	}
 
-	i := rand.IntN(len(gameState.People))
-	gameState.People[i].Role = gameobjects.CreateBurglar()
-	target := gameState.People[i]
-	fmt.Printf("Hunting for %s, known %s\n", target.GetName(), target.Role.Name)
+	for range 2 {
+		num := rand.IntN(len(gameState.People))
+		gameState.People[num].Role = gameobjects.CriminalRoles[rand.IntN(len(gameobjects.CriminalRoles))]()
+		gameState.Criminals = append(gameState.Criminals, gameState.People[num])
+	}
+	fmt.Printf("We estimate %d Syndicate members are currently in the area.\n", len(gameState.Criminals))
 
 	// REPL game loop
 	commands := commands.GetCommandMap()

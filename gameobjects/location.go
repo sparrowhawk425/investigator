@@ -13,17 +13,19 @@ import (
 type LocationType string
 
 const (
-	Residence LocationType = "Residence"
-	Hotel     LocationType = "Hotel"
-	Store     LocationType = "Store"
-	Bank      LocationType = "Bank"
-	Museum    LocationType = "Museum"
-	Business  LocationType = "Business"
-	Casino    LocationType = "Casino"
+	Residence  LocationType = "Residence"
+	Hotel      LocationType = "Hotel"
+	Store      LocationType = "Store"
+	Bank       LocationType = "Bank"
+	Museum     LocationType = "Museum"
+	Business   LocationType = "Business"
+	Casino     LocationType = "Casino"
+	PawnShop   LocationType = "Pawn Shop"
+	Restaurant LocationType = "Restaurant"
 )
 
 var LocationTypes = []LocationType{
-	Residence, Hotel, Store, Bank, Museum, Business, Casino,
+	Residence, Hotel, Store, Bank, Museum, Business, Casino, PawnShop,
 }
 
 func (LocationType) IsType() bool {

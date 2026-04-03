@@ -118,7 +118,8 @@ type Character struct {
 	Traits  Characteristics
 	Address Location
 
-	Role Role
+	Role        Role
+	possessions []Loot
 }
 
 func (c Character) GetName() string {
@@ -179,12 +180,19 @@ func (c *Character) SetTarget(loc *Location) {
 
 func (c *Character) FindTarget(gs HasLocations) {
 	targets := gs.GetLocationsByType(c.Role.targetLocations)
+	if len(targets) == 0 {
+		targets = gs.GetLocationsByLootType(c.Role.preferredLoot)
+	}
 	target := targets[rand.IntN(len(targets))]
 	c.SetTarget(&target)
 }
 
+func (c Character) GetPossessions() []Loot {
+	return c.possessions
+}
+
 func (c *Character) UpdatePossessions(lootType LootType, amt int) {
-	c.Role.possessions = append(c.Role.possessions, Loot{
+	c.possessions = append(c.possessions, Loot{
 		Type:     lootType,
 		Quantity: amt,
 		Value:    lootType.GetValue(),
@@ -231,7 +239,7 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],
 			HairLength:  HairLengths[rand.IntN(len(HairLengths))],
 		},
-		Role: CreateNightGuard(),
+		Role: RegularRoles[rand.IntN(len(RegularRoles))](),
 	}
 }
 

@@ -17,8 +17,8 @@ type GameState struct {
 	Player    Player
 	Places    []gameobjects.Location
 	People    []gameobjects.Character
-	//Criminals []enemies.Enemy
-	Crimes []Crime
+	Criminals []gameobjects.Character
+	Crimes    []Crime
 }
 
 func (gs GameState) PrintDay() {

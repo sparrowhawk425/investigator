@@ -29,6 +29,34 @@ func CreateSleepAction() Action {
 	}
 }
 
+// Regular Actions
+
+func CreateGuardAction() Action {
+	return Action{
+		Name: "Guard",
+		Risk: 0,
+		Act:  GuardAction,
+	}
+}
+
+func CreateBankingAction() Action {
+	return Action{
+		Name: "Banking",
+		Risk: 0,
+		Act:  BankingAction,
+	}
+}
+
+func CreateManagingAction() Action {
+	return Action{
+		Name: "Managing",
+		Risk: 0,
+		Act:  ManagingAction,
+	}
+}
+
+// Criminal Actions
+
 func CreateLieLowAction() Action {
 	return Action{
 		Name: "Lie Low",
@@ -53,15 +81,31 @@ func CreateBurgleAction() Action {
 	}
 }
 
-func CreateGuardAction() Action {
+func CreateRobAction() Action {
 	return Action{
-		Name: "Guard",
-		Risk: 0,
-		Act:  GuardAction,
+		Name: "Rob",
+		Risk: 40,
+		Act:  RobAction,
 	}
 }
 
-// PerformActions
+func CreateVandalizeAction() Action {
+	return Action{
+		Name: "Vandalize",
+		Risk: 20,
+		Act:  VandalizeAction,
+	}
+}
+
+func CreateFenceAction() Action {
+	return Action{
+		Name: "Fence",
+		Risk: 15,
+		Act:  FenceAction,
+	}
+}
+
+// Perform Actions
 
 func SleepAction(locations HasLocations, person *Character) {
 	fmt.Println("Sleeping...")
@@ -69,6 +113,14 @@ func SleepAction(locations HasLocations, person *Character) {
 
 func GuardAction(locations HasLocations, person *Character) {
 	fmt.Println("Guarding...")
+}
+
+func BankingAction(locations HasLocations, person *Character) {
+	fmt.Println("Banking...")
+}
+
+func ManagingAction(locations HasLocations, person *Character) {
+	fmt.Println("Managing...")
 }
 
 func LieLowAction(locations HasLocations, person *Character) {
@@ -113,4 +165,16 @@ func BurgleAction(locations HasLocations, person *Character) {
 
 	// Enemy needs new target
 	person.SetTarget(nil)
+}
+
+func RobAction(locations HasLocations, person *Character) {
+	fmt.Println("Robbing...")
+}
+
+func VandalizeAction(locations HasLocations, person *Character) {
+	fmt.Println("Vandalizing...")
+}
+
+func FenceAction(locations HasLocations, person *Character) {
+	fmt.Println("Fencing...")
 }
