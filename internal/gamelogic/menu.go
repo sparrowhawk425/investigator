@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/samber/lo"
-	"github.com/sparrowhawk425/investigators/gameobjects"
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
 type ToString interface {
@@ -21,7 +21,7 @@ type FilterType interface {
 
 type FilterFunc[T any] func(T, int) bool
 
-func GetFilterFunc(scanner *bufio.Scanner, filterType FilterType) func(gameobjects.Location, int) bool {
+func GetFilterFunc[T any](scanner *bufio.Scanner, filterType FilterType) func(gameobjects.Location, int) bool {
 	switch filterType.(type) {
 	case gameobjects.LocationType:
 		fmt.Println("location type")
@@ -29,7 +29,7 @@ func GetFilterFunc(scanner *bufio.Scanner, filterType FilterType) func(gameobjec
 		availableTypes := gameobjects.LocationTypes
 		done := false
 		for !done {
-			idx := MenuSelect(scanner, "Select Location Type:", lo.Map(availableTypes, func(lt gameobjects.LocationType, _ int) string { return string(lt) }))
+			idx := MenuSelect(scanner, "Select Location Type:", lo.Map(availableTypes, func(lt gameobjects.LocationType, _ int) string { return lt.String() }))
 			locTypes = append(locTypes, availableTypes[idx])
 			availableTypes = slices.Delete(availableTypes, idx, idx)
 			fmt.Print("Add another? > ")

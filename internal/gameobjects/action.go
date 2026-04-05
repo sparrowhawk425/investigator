@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 
-	"github.com/sparrowhawk425/investigators/times"
+	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
 // Interface for the GameState to avoid circular import
@@ -13,7 +13,7 @@ type HasLocations interface {
 	GetLocationsByType(locTypes []LocationType) []Location
 	GetLocationsByLootType(loots []LootType) []Location
 	AddCharacterToLocation(location Location, character Character)
-	CreateCrime(location Location, loot []Loot)
+	CreateCrime(location Location, name string, loot []Loot)
 }
 type Action struct {
 	Name string
@@ -23,7 +23,7 @@ type Action struct {
 
 func CreateSleepAction() Action {
 	return Action{
-		Name: "Sleep",
+		Name: "Sleeping",
 		Risk: 5,
 		Act:  SleepAction,
 	}
@@ -33,7 +33,7 @@ func CreateSleepAction() Action {
 
 func CreateGuardAction() Action {
 	return Action{
-		Name: "Guard",
+		Name: "Guarding",
 		Risk: 0,
 		Act:  GuardAction,
 	}
@@ -59,7 +59,7 @@ func CreateManagingAction() Action {
 
 func CreateLieLowAction() Action {
 	return Action{
-		Name: "Lie Low",
+		Name: "Lying Low",
 		Risk: 5,
 		Act:  LieLowAction,
 	}
@@ -67,7 +67,7 @@ func CreateLieLowAction() Action {
 
 func CreateReconAction() Action {
 	return Action{
-		Name: "Recon",
+		Name: "Performing Recon",
 		Risk: 20,
 		Act:  ReconAction,
 	}
@@ -75,7 +75,7 @@ func CreateReconAction() Action {
 
 func CreateBurgleAction() Action {
 	return Action{
-		Name: "Burgle",
+		Name: "Burglary",
 		Risk: 30,
 		Act:  BurgleAction,
 	}
@@ -83,7 +83,7 @@ func CreateBurgleAction() Action {
 
 func CreateRobAction() Action {
 	return Action{
-		Name: "Rob",
+		Name: "Robbery",
 		Risk: 40,
 		Act:  RobAction,
 	}
@@ -91,7 +91,7 @@ func CreateRobAction() Action {
 
 func CreateVandalizeAction() Action {
 	return Action{
-		Name: "Vandalize",
+		Name: "Vandalism",
 		Risk: 20,
 		Act:  VandalizeAction,
 	}
@@ -99,7 +99,7 @@ func CreateVandalizeAction() Action {
 
 func CreateFenceAction() Action {
 	return Action{
-		Name: "Fence",
+		Name: "Fencing",
 		Risk: 15,
 		Act:  FenceAction,
 	}
@@ -109,18 +109,23 @@ func CreateFenceAction() Action {
 
 func SleepAction(locations HasLocations, person *Character) {
 	fmt.Println("Sleeping...")
+	locations.AddCharacterToLocation(person.Address, *person)
 }
 
 func GuardAction(locations HasLocations, person *Character) {
 	fmt.Println("Guarding...")
+	locations.AddCharacterToLocation(*person.GetTarget(), *person)
+
 }
 
 func BankingAction(locations HasLocations, person *Character) {
 	fmt.Println("Banking...")
+	locations.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
 func ManagingAction(locations HasLocations, person *Character) {
 	fmt.Println("Managing...")
+	locations.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
 func LieLowAction(locations HasLocations, person *Character) {
@@ -133,9 +138,17 @@ func ReconAction(locations HasLocations, person *Character) {
 	locations.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
-// TODO: There seem to be an inordinate amount of zeros returned from rand...
 func BurgleAction(locations HasLocations, person *Character) {
 	fmt.Println("Burgling...")
+
+	takeLoot(locations, "Burglary", person)
+
+	// Enemy needs new target
+	person.SetTarget(nil)
+}
+
+// TODO: There seem to be an inordinate amount of zeros returned from rand...
+func takeLoot(locations HasLocations, crime string, person *Character) {
 
 	locations.AddCharacterToLocation(*person.GetTarget(), *person)
 	stolenLoot := []Loot{}
@@ -155,24 +168,26 @@ func BurgleAction(locations HasLocations, person *Character) {
 		}
 	}
 	if len(stolenLoot) > 0 {
-		locations.CreateCrime(*person.GetTarget(), stolenLoot)
+		locations.CreateCrime(*person.GetTarget(), crime, stolenLoot)
 		riskPct := person.Role.Action.Risk + person.GetTarget().GetRiskPercent()
 		num := rand.IntN(100) + 1
 		if riskPct > num {
 			person.GetTarget().AddClue(person.CreateClue())
 		}
 	}
-
-	// Enemy needs new target
-	person.SetTarget(nil)
 }
 
 func RobAction(locations HasLocations, person *Character) {
 	fmt.Println("Robbing...")
+
+	takeLoot(locations, "Robbery", person)
+
+	person.SetTarget(nil)
 }
 
 func VandalizeAction(locations HasLocations, person *Character) {
 	fmt.Println("Vandalizing...")
+
 }
 
 func FenceAction(locations HasLocations, person *Character) {

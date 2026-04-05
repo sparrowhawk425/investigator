@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/samber/lo"
-	"github.com/sparrowhawk425/investigators/gamelogic"
 	"github.com/sparrowhawk425/investigators/internal/functions"
+	"github.com/sparrowhawk425/investigators/internal/gamelogic"
 )
 
 func GetDossierCommandMap() map[string]cliCommand {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/sparrowhawk425/investigators/gameobjects"
-	"github.com/sparrowhawk425/investigators/times"
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
+	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
 type GameState struct {
@@ -58,12 +58,13 @@ func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, chara
 	}
 }
 
-func (gs *GameState) CreateCrime(location gameobjects.Location, loot []gameobjects.Loot) {
+func (gs *GameState) CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot) {
 
 	gs.Crimes = append(gs.Crimes, Crime{
 		Day:        gs.Day,
 		TimeOfDay:  gs.TimeOfDay,
 		Location:   location,
+		Type:       name,
 		StolenLoot: loot,
 	})
 }

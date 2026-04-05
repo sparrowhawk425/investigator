@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/samber/lo"
-	"github.com/sparrowhawk425/investigators/gameobjects"
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
 type Dossier struct {

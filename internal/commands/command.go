@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sparrowhawk425/investigators/gamelogic"
-	"github.com/sparrowhawk425/investigators/gameobjects"
+	"github.com/sparrowhawk425/investigators/internal/gamelogic"
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
 // TODO: Use argparse package? https://pkg.go.dev/github.com/akamensky/argparse

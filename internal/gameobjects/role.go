@@ -1,7 +1,7 @@
 package gameobjects
 
 import (
-	"github.com/sparrowhawk425/investigators/times"
+	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
 type Role struct {

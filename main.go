@@ -9,12 +9,12 @@ import (
 
 	"github.com/samber/lo"
 
-	"github.com/sparrowhawk425/investigators/commands"
-	"github.com/sparrowhawk425/investigators/gamelogic"
-	"github.com/sparrowhawk425/investigators/gameobjects"
+	"github.com/sparrowhawk425/investigators/internal/commands"
 	"github.com/sparrowhawk425/investigators/internal/functions"
+	"github.com/sparrowhawk425/investigators/internal/gamelogic"
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
-	"github.com/sparrowhawk425/investigators/times"
+	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
 func main() {
