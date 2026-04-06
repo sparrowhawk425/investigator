@@ -184,12 +184,12 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	gs.Player.CurrentLocation = loc
 	fmt.Println(loc.GetAddress())
 
-	if len(loc.Visitors) > 0 {
-		fmt.Println("People:")
-		for _, person := range loc.Visitors {
-			fmt.Printf(" - %s", person.GetName())
-		}
-	}
+	// if len(loc.Visitors) > 0 {
+	// 	fmt.Println("People:")
+	// 	for _, person := range loc.Visitors {
+	// 		fmt.Printf(" - %s", person.GetName())
+	// 	}
+	// }
 	if len(loc.GetAvailableLoot()) > 0 {
 		fmt.Println("Loot:")
 		for _, loot := range loc.GetAvailableLoot() {

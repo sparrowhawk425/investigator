@@ -10,6 +10,13 @@ import (
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
 )
 
+// Cycle mapping for Character
+type Person interface {
+	GetName() string
+	GetFirstName() string
+	GetLastName() string
+}
+
 type LocationType string
 
 const (
@@ -90,7 +97,7 @@ type Location struct {
 	PostCode string
 
 	IsOccupied bool
-	Visitors   []Character
+	Visitors   []Person
 
 	quality Quality
 	loot    []Loot

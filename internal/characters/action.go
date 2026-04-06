@@ -1,24 +1,30 @@
-package gameobjects
+package characters
 
 import (
 	"fmt"
 	"math/rand/v2"
 
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
 // Interface for the GameState to avoid circular import
 type HasLocations interface {
 	GetTimeOfDay() times.TimeOfDay
-	GetLocationsByType(locTypes []LocationType) []Location
-	GetLocationsByLootType(loots []LootType) []Location
-	AddCharacterToLocation(location Location, character Character)
-	CreateCrime(location Location, name string, loot []Loot)
+	GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location
+	GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location
+	AddCharacterToLocation(location gameobjects.Location, character Character)
+	CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot)
 }
 type Action struct {
 	Name string
 	Risk int //percent
 	Act  func(HasLocations, *Character)
+}
+
+func ActionFiniteStateMachine(role Role, trait Behavior) Action {
+
+	return Action{}
 }
 
 func CreateSleepAction() Action {
@@ -151,7 +157,7 @@ func BurgleAction(locations HasLocations, person *Character) {
 func takeLoot(locations HasLocations, crime string, person *Character) {
 
 	locations.AddCharacterToLocation(*person.GetTarget(), *person)
-	stolenLoot := []Loot{}
+	stolenLoot := []gameobjects.Loot{}
 	for _, lootType := range person.GetPreferredLoot() {
 		maxLoot := person.GetTarget().GetLootAmount(lootType)
 		// Take a random amount of the available loot
@@ -160,7 +166,7 @@ func takeLoot(locations HasLocations, crime string, person *Character) {
 			if amt > 0 {
 				person.GetTarget().UpdateLoot(lootType, -1*amt)
 				person.UpdatePossessions(lootType, amt)
-				stolenLoot = append(stolenLoot, Loot{
+				stolenLoot = append(stolenLoot, gameobjects.Loot{
 					Type:     lootType,
 					Quantity: amt,
 				})

@@ -1,4 +1,4 @@
-package gameobjects
+package characters
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
 )
 
@@ -116,10 +117,11 @@ type name struct {
 type Character struct {
 	name    name
 	Traits  Characteristics
-	Address Location
+	Address gameobjects.Location
 
 	Role        Role
-	possessions []Loot
+	Behavior    Behavior
+	possessions []gameobjects.Loot
 }
 
 func (c Character) GetName() string {
@@ -162,7 +164,7 @@ func (c Character) Print() {
 	fmt.Printf("  Shoe Size: %s\n", c.Traits.ShoeSize)
 }
 
-func (c Character) GetPreferredLoot() []LootType {
+func (c Character) GetPreferredLoot() []gameobjects.LootType {
 	return c.Role.preferredLoot
 }
 
@@ -170,11 +172,11 @@ func (c Character) HasTarget() bool {
 	return c.Role.target != nil
 }
 
-func (c *Character) GetTarget() *Location {
+func (c *Character) GetTarget() *gameobjects.Location {
 	return c.Role.target
 }
 
-func (c *Character) SetTarget(loc *Location) {
+func (c *Character) SetTarget(loc *gameobjects.Location) {
 	c.Role.target = loc
 }
 
@@ -187,12 +189,12 @@ func (c *Character) FindTarget(gs HasLocations) {
 	c.SetTarget(&target)
 }
 
-func (c Character) GetPossessions() []Loot {
+func (c Character) GetPossessions() []gameobjects.Loot {
 	return c.possessions
 }
 
-func (c *Character) UpdatePossessions(lootType LootType, amt int) {
-	c.possessions = append(c.possessions, Loot{
+func (c *Character) UpdatePossessions(lootType gameobjects.LootType, amt int) {
+	c.possessions = append(c.possessions, gameobjects.Loot{
 		Type:     lootType,
 		Quantity: amt,
 		Value:    lootType.GetValue(),
@@ -239,7 +241,8 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],
 			HairLength:  HairLengths[rand.IntN(len(HairLengths))],
 		},
-		Role: RegularRoles[rand.IntN(len(RegularRoles))](),
+		Role:     RegularRoles[rand.IntN(len(RegularRoles))],
+		Behavior: RegularBehaviors[rand.IntN(len(RegularBehaviors))],
 	}
 }
 

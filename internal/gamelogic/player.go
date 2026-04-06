@@ -6,12 +6,13 @@ import (
 	"strconv"
 
 	"github.com/samber/lo"
+	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
 type Dossier struct {
 	Name    string
-	Target  *gameobjects.Character
+	Target  *characters.Character
 	Profile string
 	Notes   []string
 }
@@ -29,17 +30,17 @@ func (p *Player) CreateDossier(scanner *bufio.Scanner) {
 	scanner.Scan()
 	name := scanner.Text()
 
-	target := gameobjects.Character{
-		Traits: gameobjects.Characteristics{
-			Dob:         gameobjects.DateOfBirth{},
+	target := characters.Character{
+		Traits: characters.Characteristics{
+			Dob:         characters.DateOfBirth{},
 			Nationality: unknown,
 			Gender:      unknown,
-			Height:      gameobjects.UnknownHeight,
-			Weight:      gameobjects.UnknownWeight,
-			EyeColor:    gameobjects.UnknownEyes,
-			HairColor:   gameobjects.UnknownHairColor,
-			ShoeSize:    gameobjects.UnknownShoe,
-			HairLength:  gameobjects.UnknownHairLength,
+			Height:      characters.UnknownHeight,
+			Weight:      characters.UnknownWeight,
+			EyeColor:    characters.UnknownEyes,
+			HairColor:   characters.UnknownHairColor,
+			ShoeSize:    characters.UnknownShoe,
+			HairLength:  characters.UnknownHairLength,
 		},
 	}
 	target.SetName(unknown, unknown)
@@ -134,23 +135,23 @@ func (d *Dossier) UpdateCharacter(scanner *bufio.Scanner) {
 		case cHeight:
 			fmt.Print("Height: ")
 			scanner.Scan()
-			d.Target.Traits.Height = gameobjects.Height(scanner.Text())
+			d.Target.Traits.Height = characters.Height(scanner.Text())
 		case cWeight:
 			fmt.Print("Weight: ")
 			scanner.Scan()
-			d.Target.Traits.Weight = gameobjects.Weight(scanner.Text())
+			d.Target.Traits.Weight = characters.Weight(scanner.Text())
 		case cEyeColor:
-			idx = MenuSelect(scanner, "Eye Color:", lo.Map(gameobjects.EyeColors, func(ec gameobjects.EyeColor, _ int) string { return string(ec) }))
-			d.Target.Traits.EyeColor = gameobjects.EyeColors[idx]
+			idx = MenuSelect(scanner, "Eye Color:", lo.Map(characters.EyeColors, func(ec characters.EyeColor, _ int) string { return string(ec) }))
+			d.Target.Traits.EyeColor = characters.EyeColors[idx]
 		case cHairColor:
-			idx = MenuSelect(scanner, "Hair Color:", lo.Map(gameobjects.HairColors, func(hc gameobjects.HairColor, _ int) string { return string(hc) }))
-			d.Target.Traits.HairColor = gameobjects.HairColors[idx]
+			idx = MenuSelect(scanner, "Hair Color:", lo.Map(characters.HairColors, func(hc characters.HairColor, _ int) string { return string(hc) }))
+			d.Target.Traits.HairColor = characters.HairColors[idx]
 		case cHairLength:
-			idx = MenuSelect(scanner, "Hair Length:", lo.Map(gameobjects.HairLengths, func(hl gameobjects.HairLength, _ int) string { return string(hl) }))
-			d.Target.Traits.HairLength = gameobjects.HairLengths[idx]
+			idx = MenuSelect(scanner, "Hair Length:", lo.Map(characters.HairLengths, func(hl characters.HairLength, _ int) string { return string(hl) }))
+			d.Target.Traits.HairLength = characters.HairLengths[idx]
 		case cShoeSize:
-			idx = MenuSelect(scanner, "Shoe Size:", lo.Map(gameobjects.ShoeSizes, func(ss gameobjects.ShoeSize, _ int) string { return string(ss) }))
-			d.Target.Traits.ShoeSize = gameobjects.ShoeSizes[idx]
+			idx = MenuSelect(scanner, "Shoe Size:", lo.Map(characters.ShoeSizes, func(ss characters.ShoeSize, _ int) string { return string(ss) }))
+			d.Target.Traits.ShoeSize = characters.ShoeSizes[idx]
 		case cDone:
 			isDone = true
 		}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
@@ -16,8 +17,8 @@ type GameState struct {
 	TimeOfDay times.TimeOfDay
 	Player    Player
 	Places    []gameobjects.Location
-	People    []gameobjects.Character
-	Criminals []gameobjects.Character
+	People    []characters.Character
+	Criminals []characters.Character
 	Crimes    []Crime
 }
 
@@ -49,7 +50,7 @@ func (gs GameState) GetLocations(filters []func(gameobjects.Location, int) bool)
 	return locations
 }
 
-func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, character gameobjects.Character) {
+func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, character characters.Character) {
 	for i := range gs.Places {
 		if gs.Places[i].Equals(location) {
 			gs.Places[i].Visitors = append(gs.Places[i].Visitors, character)
@@ -73,7 +74,7 @@ func (gs *GameState) Update() {
 
 	// Reset location visitors
 	for i := range gs.Places {
-		gs.Places[i].Visitors = []gameobjects.Character{}
+		gs.Places[i].Visitors = nil
 	}
 	for i := range gs.People {
 		gs.People[i].PerformAction(gs)
@@ -86,7 +87,11 @@ func (gs *GameState) Update() {
 	for _, place := range gs.Places {
 		if len(place.Visitors) > 0 {
 			for _, visitor := range place.Visitors {
-				fmt.Printf("%s is visiting %d %s\n", visitor.GetName(), place.Address.Number, place.Address.Name)
+				if visitor != nil {
+					fmt.Printf("%s is visiting %d %s\n", visitor.GetName(), place.Address.Number, place.Address.Name)
+				} else {
+					fmt.Printf("Visitor to %s is nil\n", place.GetAddress())
+				}
 			}
 		}
 	}

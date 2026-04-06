@@ -9,6 +9,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/commands"
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
@@ -41,7 +42,7 @@ func main() {
 	}
 	// Create people
 	for _, c := range results {
-		gameState.People = append(gameState.People, gameobjects.CreateRandomCharacter(c))
+		gameState.People = append(gameState.People, characters.CreateRandomCharacter(c))
 	}
 	// Create locations
 	apiLocations := lo.Map(results, func(character nameapi.Character, i int) nameapi.Location { return character.Location })
@@ -54,7 +55,7 @@ func main() {
 
 	for range 2 {
 		num := rand.IntN(len(gameState.People))
-		gameState.People[num].Role = gameobjects.CriminalRoles[rand.IntN(len(gameobjects.CriminalRoles))]()
+		gameState.People[num].Role = characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))]
 		gameState.Criminals = append(gameState.Criminals, gameState.People[num])
 	}
 	fmt.Printf("We estimate %d Syndicate members are currently in the area.\n", len(gameState.Criminals))
