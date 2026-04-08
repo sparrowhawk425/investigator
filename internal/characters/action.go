@@ -9,7 +9,7 @@ import (
 )
 
 // Interface for the GameState to avoid circular import
-type HasLocations interface {
+type GameStateI interface {
 	GetTimeOfDay() times.TimeOfDay
 	GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location
 	GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location
@@ -19,12 +19,32 @@ type HasLocations interface {
 type Action struct {
 	Name string
 	Risk int //percent
-	Act  func(HasLocations, *Character)
+	Act  func(GameStateI, *Character)
 }
 
-func ActionFiniteStateMachine(role Role, trait Behavior) Action {
-
-	return Action{}
+func ActionFSM(role *Role, behavior Behavior, gs GameStateI) Action {
+	// If it's time to sleep
+	if gs.GetTimeOfDay() == role.SleepDuring {
+		return CreateSleepAction()
+	}
+	// If it's time to take action
+	if gs.GetTimeOfDay() == role.ActiveDuring {
+		// If they have a target
+		if role.target != nil {
+			return role.RoleAction
+		}
+		// Find a target and perform recon
+		targets := gs.GetLocationsByType(role.targetLocations)
+		targets = behavior.FilterLocations(targets)
+		if len(targets) == 0 {
+			targets = gs.GetLocationsByLootType(role.preferredLoot)
+		}
+		target := targets[rand.IntN(len(targets))]
+		role.target = &target
+		return CreateReconAction()
+	}
+	// Not doing anything else, so rest
+	return role.RestAction
 }
 
 func CreateSleepAction() Action {
@@ -36,6 +56,14 @@ func CreateSleepAction() Action {
 }
 
 // Regular Actions
+
+func CreateRestAction() Action {
+	return Action{
+		Name: "Resting",
+		Risk: 0,
+		Act:  RestAction,
+	}
+}
 
 func CreateGuardAction() Action {
 	return Action{
@@ -113,50 +141,55 @@ func CreateFenceAction() Action {
 
 // Perform Actions
 
-func SleepAction(locations HasLocations, person *Character) {
+func SleepAction(gs GameStateI, person *Character) {
 	fmt.Println("Sleeping...")
-	locations.AddCharacterToLocation(person.Address, *person)
+	gs.AddCharacterToLocation(person.Address, *person)
 }
 
-func GuardAction(locations HasLocations, person *Character) {
+func RestAction(gs GameStateI, person *Character) {
+	fmt.Println("Resting...")
+	gs.AddCharacterToLocation(person.Address, *person)
+}
+
+func GuardAction(gs GameStateI, person *Character) {
 	fmt.Println("Guarding...")
-	locations.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 
 }
 
-func BankingAction(locations HasLocations, person *Character) {
+func BankingAction(gs GameStateI, person *Character) {
 	fmt.Println("Banking...")
-	locations.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
-func ManagingAction(locations HasLocations, person *Character) {
+func ManagingAction(gs GameStateI, person *Character) {
 	fmt.Println("Managing...")
-	locations.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
-func LieLowAction(locations HasLocations, person *Character) {
+func LieLowAction(gs GameStateI, person *Character) {
 	fmt.Println("Lying low...")
 }
 
-func ReconAction(locations HasLocations, person *Character) {
+func ReconAction(gs GameStateI, person *Character) {
 	fmt.Println("Performing recon...")
 
-	locations.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
-func BurgleAction(locations HasLocations, person *Character) {
+func BurgleAction(gs GameStateI, person *Character) {
 	fmt.Println("Burgling...")
 
-	takeLoot(locations, "Burglary", person)
+	takeLoot(gs, "Burglary", person)
 
 	// Enemy needs new target
 	person.SetTarget(nil)
 }
 
 // TODO: There seem to be an inordinate amount of zeros returned from rand...
-func takeLoot(locations HasLocations, crime string, person *Character) {
+func takeLoot(gs GameStateI, crime string, person *Character) {
 
-	locations.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 	stolenLoot := []gameobjects.Loot{}
 	for _, lootType := range person.GetPreferredLoot() {
 		maxLoot := person.GetTarget().GetLootAmount(lootType)
@@ -174,8 +207,8 @@ func takeLoot(locations HasLocations, crime string, person *Character) {
 		}
 	}
 	if len(stolenLoot) > 0 {
-		locations.CreateCrime(*person.GetTarget(), crime, stolenLoot)
-		riskPct := person.Role.Action.Risk + person.GetTarget().GetRiskPercent()
+		gs.CreateCrime(*person.GetTarget(), crime, stolenLoot)
+		riskPct := person.Role.RoleAction.Risk + person.GetTarget().GetRiskPercent()
 		num := rand.IntN(100) + 1
 		if riskPct > num {
 			person.GetTarget().AddClue(person.CreateClue())
@@ -183,19 +216,21 @@ func takeLoot(locations HasLocations, crime string, person *Character) {
 	}
 }
 
-func RobAction(locations HasLocations, person *Character) {
+func RobAction(gs GameStateI, person *Character) {
 	fmt.Println("Robbing...")
 
-	takeLoot(locations, "Robbery", person)
+	takeLoot(gs, "Robbery", person)
 
 	person.SetTarget(nil)
 }
 
-func VandalizeAction(locations HasLocations, person *Character) {
+func VandalizeAction(gs GameStateI, person *Character) {
 	fmt.Println("Vandalizing...")
 
 }
 
-func FenceAction(locations HasLocations, person *Character) {
+func FenceAction(gs GameStateI, person *Character) {
 	fmt.Println("Fencing...")
+
+	gs.AddCharacterToLocation(person.Address, *person)
 }

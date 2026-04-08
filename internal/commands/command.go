@@ -116,17 +116,17 @@ func commandLocations(gs *gamelogic.GameState, params []string) (bool, error) {
 	for _, loc := range locations {
 		switch loc.Type {
 		case gameobjects.Residence:
-			fmt.Printf("%s residence located at:\n", loc.GetQuality())
+			fmt.Printf("%s residence located at:\n", loc.GetQualityStr())
 		case gameobjects.Bank:
-			fmt.Printf("%s bank located at:\n", loc.GetQuality())
+			fmt.Printf("%s bank located at:\n", loc.GetQualityStr())
 		case gameobjects.Business:
-			fmt.Printf("%s local business located at:\n", loc.GetQuality())
+			fmt.Printf("%s local business located at:\n", loc.GetQualityStr())
 		case gameobjects.Hotel:
-			fmt.Printf("%s hotel located at:\n", loc.GetQuality())
+			fmt.Printf("%s hotel located at:\n", loc.GetQualityStr())
 		case gameobjects.Museum:
-			fmt.Printf("%s local museum located at:\n", loc.GetQuality())
+			fmt.Printf("%s local museum located at:\n", loc.GetQualityStr())
 		case gameobjects.Store:
-			fmt.Printf("%s local store located at:\n", loc.GetQuality())
+			fmt.Printf("%s local store located at:\n", loc.GetQualityStr())
 		default:
 			fmt.Println("Something undefinable located at:")
 		}

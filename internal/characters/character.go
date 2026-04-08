@@ -180,8 +180,11 @@ func (c *Character) SetTarget(loc *gameobjects.Location) {
 	c.Role.target = loc
 }
 
-func (c *Character) FindTarget(gs HasLocations) {
+// TODO: This is redundant with ActionFSM (but on a different layer: role vs character)
+func (c *Character) FindTarget(gs GameStateI) {
+
 	targets := gs.GetLocationsByType(c.Role.targetLocations)
+	targets = c.Behavior.FilterLocations(targets)
 	if len(targets) == 0 {
 		targets = gs.GetLocationsByLootType(c.Role.preferredLoot)
 	}
@@ -201,19 +204,9 @@ func (c *Character) UpdatePossessions(lootType gameobjects.LootType, amt int) {
 	})
 }
 
-func (c *Character) PerformAction(gs HasLocations) {
-	action := CreateLieLowAction()
-	if gs.GetTimeOfDay() == c.Role.SleepDuring {
-		action = CreateSleepAction()
-	} else if gs.GetTimeOfDay() == c.Role.ActiveDuring {
-		if !c.HasTarget() {
-			// If no target is currently selected, find a desirable target and assign it
-			action = CreateReconAction()
-			c.FindTarget(gs)
-		} else {
-			action = c.Role.Action
-		}
-	}
+func (c *Character) PerformAction(gs GameStateI) {
+	// Select the appropriate action to perform
+	action := ActionFSM(&c.Role, c.Behavior, gs)
 	// Perform the selected action
 	action.Act(gs, c)
 }

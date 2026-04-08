@@ -41,6 +41,7 @@ func (lt LootType) GetValue() int {
 
 type Loot struct {
 	Type     LootType
-	Value    int
 	Quantity int
+	Value    int
+	IsStolen bool
 }

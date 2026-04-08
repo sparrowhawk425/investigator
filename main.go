@@ -3,17 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
-	"math/rand/v2"
 	"os"
 
 	"github.com/samber/lo"
 
-	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/commands"
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
-	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
@@ -22,7 +18,7 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	gameState := gamelogic.GameState{
 		Scanner:   scanner,
-		Day:       1,
+		DayNumber: 1,
 		TimeOfDay: times.Morning,
 	}
 	fmt.Print("What is your name, Investigator? > ")
@@ -35,33 +31,12 @@ func main() {
 	country := nameapi.Countries[idx]
 	fmt.Printf("Travelling to %s...\n", country.Name)
 
-	// Add locations and people to game
-	results, err := nameapi.MakeHTTPGetRequest(country, 20)
-	if err != nil {
-		log.Fatalf("Error getting locations from API: %v", err)
-	}
-	// Create people
-	for _, c := range results {
-		gameState.People = append(gameState.People, characters.CreateRandomCharacter(c))
-	}
-	// Create locations
-	apiLocations := lo.Map(results, func(character nameapi.Character, i int) nameapi.Location { return character.Location })
-	gameState.Places = gameobjects.CreateRandomLocations(apiLocations)
-
-	// Set Work Targets
-	for i := range gameState.People {
-		gameState.People[i].FindTarget(&gameState)
-	}
-
-	for range 2 {
-		num := rand.IntN(len(gameState.People))
-		gameState.People[num].Role = characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))]
-		gameState.Criminals = append(gameState.Criminals, gameState.People[num])
-	}
+	gameState.BuildGame(country)
 	fmt.Printf("We estimate %d Syndicate members are currently in the area.\n", len(gameState.Criminals))
 
 	// REPL game loop
 	commands := commands.GetCommandMap()
+	var err error
 	for {
 		gameState.PrintDay()
 

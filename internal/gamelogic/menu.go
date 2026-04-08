@@ -3,11 +3,7 @@ package gamelogic
 import (
 	"bufio"
 	"fmt"
-	"slices"
 	"strconv"
-
-	"github.com/samber/lo"
-	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
 type ToString interface {
@@ -21,32 +17,33 @@ type FilterType interface {
 
 type FilterFunc[T any] func(T, int) bool
 
-func GetFilterFunc[T any](scanner *bufio.Scanner, filterType FilterType) func(gameobjects.Location, int) bool {
-	switch filterType.(type) {
-	case gameobjects.LocationType:
-		fmt.Println("location type")
-		locTypes := []gameobjects.LocationType{}
-		availableTypes := gameobjects.LocationTypes
-		done := false
-		for !done {
-			idx := MenuSelect(scanner, "Select Location Type:", lo.Map(availableTypes, func(lt gameobjects.LocationType, _ int) string { return lt.String() }))
-			locTypes = append(locTypes, availableTypes[idx])
-			availableTypes = slices.Delete(availableTypes, idx, idx)
-			fmt.Print("Add another? > ")
-			scanner.Scan()
-			done = scanner.Text() == "y"
-		}
-		return gameobjects.FilterLocationsByType(locTypes)
-	case gameobjects.LootType:
-		fmt.Println("LootType")
-		return gameobjects.FilterLocationsByLootType(nil)
-	case gameobjects.Quality:
-		fmt.Println("Quality")
+// TODO: Pass map of filtertype to filter function?
+// func GetLocationFilterFunc[T any](scanner *bufio.Scanner, filterType FilterType) FilterFunc[T] {
+// 	switch filterType.(type) {
+// 	case gameobjects.LocationType:
+// 		fmt.Println("location type")
+// 		locTypes := []gameobjects.LocationType{}
+// 		availableTypes := gameobjects.LocationTypes
+// 		done := false
+// 		for !done {
+// 			idx := MenuSelect(scanner, "Select Location Type:", lo.Map(availableTypes, func(lt gameobjects.LocationType, _ int) string { return lt.String() }))
+// 			locTypes = append(locTypes, availableTypes[idx])
+// 			availableTypes = slices.Delete(availableTypes, idx, idx)
+// 			fmt.Print("Add another? > ")
+// 			scanner.Scan()
+// 			done = scanner.Text() == "y"
+// 		}
+// 		return gameobjects.FilterLocationsByType(locTypes)
+// 	case gameobjects.LootType:
+// 		fmt.Println("LootType")
+// 		return gameobjects.FilterLocationsByLootType(nil)
+// 	case gameobjects.Quality:
+// 		fmt.Println("Quality")
 
-		return gameobjects.FilterLocationsByQuality(nil)
-	}
-	return nil
-}
+// 		return gameobjects.FilterLocationsByQuality(nil)
+// 	}
+// 	return nil
+// }
 
 func filter[T any](items []T, fn func(item T, i int) bool) []T {
 	filteredItems := []T{}
@@ -62,7 +59,7 @@ func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, ite
 
 	// TODO: Figure out how to set up generic filter function selectors
 	// filterIdx := MenuSelect(scanner, "Choose Filter:", lo.Map(filterTypes, func(ft FilterType, _ int) string { return ft.String() }))
-	// filterFunc := GetFilterFunc(scanner, filterTypes[filterIdx])
+	// filterFunc := GetLocationFilterFunc[T](scanner, filterTypes[filterIdx])
 	// availableItems := filter(items, filterFunc)
 	idx := -1
 	for idx < 0 {

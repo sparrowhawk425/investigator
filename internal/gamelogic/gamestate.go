@@ -3,17 +3,21 @@ package gamelogic
 import (
 	"bufio"
 	"fmt"
+	"log"
+	"math/rand/v2"
 
 	"github.com/samber/lo"
 
 	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
+	"github.com/sparrowhawk425/investigators/internal/nameapi"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
 type GameState struct {
 	Scanner   *bufio.Scanner
-	Day       int
+	DayNumber int
+	WeekDay   times.DayOfTheWeek
 	TimeOfDay times.TimeOfDay
 	Player    Player
 	Places    []gameobjects.Location
@@ -23,11 +27,42 @@ type GameState struct {
 }
 
 func (gs GameState) PrintDay() {
-	fmt.Printf("Day: %d Time: %s\n", gs.Day, gs.TimeOfDay.GetName())
+	fmt.Printf("\n%s, Day: %d Time: %s\n", gs.WeekDay, gs.DayNumber, gs.TimeOfDay.GetName())
 }
 
 func (gs GameState) GetTimeOfDay() times.TimeOfDay {
 	return gs.TimeOfDay
+}
+
+func (gs *GameState) NextDay() {
+	gs.DayNumber++
+	gs.WeekDay = gs.WeekDay.NextDay()
+}
+
+func (gs *GameState) BuildGame(country nameapi.Country) {
+	// Add locations and people to game
+	results, err := nameapi.MakeHTTPGetRequest(country, 20)
+	if err != nil {
+		log.Fatalf("Error getting locations from API: %v", err)
+	}
+	// Create people
+	for _, c := range results {
+		gs.People = append(gs.People, characters.CreateRandomCharacter(c))
+	}
+	// Create locations
+	apiLocations := lo.Map(results, func(character nameapi.Character, i int) nameapi.Location { return character.Location })
+	gs.Places = gameobjects.CreateRandomLocations(apiLocations)
+
+	// Set Work Targets
+	for i := range gs.People {
+		gs.People[i].FindTarget(gs)
+	}
+
+	for range 2 {
+		num := rand.IntN(len(gs.People))
+		gs.People[num].Role = characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))]
+		gs.Criminals = append(gs.Criminals, gs.People[num])
+	}
 }
 
 func (gs GameState) GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location {
@@ -62,7 +97,7 @@ func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, chara
 func (gs *GameState) CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot) {
 
 	gs.Crimes = append(gs.Crimes, Crime{
-		Day:        gs.Day,
+		Day:        gs.DayNumber,
 		TimeOfDay:  gs.TimeOfDay,
 		Location:   location,
 		Type:       name,
@@ -97,6 +132,6 @@ func (gs *GameState) Update() {
 	}
 	gs.TimeOfDay = times.TransitionTimeOfDay(gs.TimeOfDay)
 	if gs.TimeOfDay == times.Morning {
-		gs.Day++
+		gs.NextDay()
 	}
 }
