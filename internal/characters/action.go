@@ -22,31 +22,6 @@ type Action struct {
 	Act  func(GameStateI, *Character)
 }
 
-func ActionFSM(role *Role, behavior Behavior, gs GameStateI) Action {
-	// If it's time to sleep
-	if gs.GetTimeOfDay() == role.SleepDuring {
-		return CreateSleepAction()
-	}
-	// If it's time to take action
-	if gs.GetTimeOfDay() == role.ActiveDuring {
-		// If they have a target
-		if role.target != nil {
-			return role.RoleAction
-		}
-		// Find a target and perform recon
-		targets := gs.GetLocationsByType(role.targetLocations)
-		targets = behavior.FilterLocations(targets)
-		if len(targets) == 0 {
-			targets = gs.GetLocationsByLootType(role.preferredLoot)
-		}
-		target := targets[rand.IntN(len(targets))]
-		role.target = &target
-		return CreateReconAction()
-	}
-	// Not doing anything else, so rest
-	return role.RestAction
-}
-
 func CreateSleepAction() Action {
 	return Action{
 		Name: "Sleeping",
@@ -197,12 +172,14 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 		if maxLoot > 0 {
 			amt := rand.IntN(maxLoot + 1)
 			if amt > 0 {
-				person.GetTarget().UpdateLoot(lootType, -1*amt)
-				person.UpdatePossessions(lootType, amt)
-				stolenLoot = append(stolenLoot, gameobjects.Loot{
-					Type:     lootType,
-					Quantity: amt,
-				})
+				fmt.Printf("%d %s be stolen from %s\n", amt, lootType, person.GetTarget().GetAddress())
+				spoils := person.GetTarget().GiveLoot(lootType, amt)
+				spoils.IsStolen = true
+				person.UpdatePossessions(spoils)
+				for _, item := range person.GetPossessions() {
+					fmt.Printf(" - %d %s\n", item.Quantity, item.Type)
+				}
+				stolenLoot = append(stolenLoot, spoils)
 			}
 		}
 	}

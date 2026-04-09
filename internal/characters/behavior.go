@@ -15,12 +15,23 @@ type Behavior struct {
 }
 
 func (b Behavior) FilterLocations(locations []gameobjects.Location) []gameobjects.Location {
-	targets := functions.Filter(locations, func(loc gameobjects.Location, i int) bool {
-		return slices.Contains(b.QualityPreference, loc.GetQuality())
-	})
-	targets = functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
-		return slices.Contains(b.LocationPreference, loc.Type)
-	})
+	targets := locations
+	if len(b.QualityPreference) > 0 {
+		qualMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
+			return slices.Contains(b.QualityPreference, loc.GetQuality())
+		})
+		if len(qualMatches) > 0 {
+			targets = qualMatches
+		}
+	}
+	if len(b.LocationPreference) > 0 {
+		locMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
+			return slices.Contains(b.LocationPreference, loc.Type)
+		})
+		if len(locMatches) > 0 {
+			targets = locMatches
+		}
+	}
 	return targets
 }
 

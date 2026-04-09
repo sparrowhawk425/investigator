@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/samber/lo"
-
 	"github.com/sparrowhawk425/investigators/internal/commands"
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
-	"github.com/sparrowhawk425/investigators/internal/nameapi"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
@@ -24,15 +21,13 @@ func main() {
 	fmt.Print("What is your name, Investigator? > ")
 	scanner.Scan()
 	name := scanner.Text()
+	gameState.Player.Name = name
 	fmt.Printf("Welcome to International Investigators, %s!\n", name)
-	// Select country
-	countryNames := lo.Map(nameapi.Countries, func(country nameapi.Country, i int) string { return country.Name })
-	idx := gamelogic.MenuSelect(scanner, "Select a Country to begin your investigation:", countryNames)
-	country := nameapi.Countries[idx]
-	fmt.Printf("Travelling to %s...\n", country.Name)
+	fmt.Println("We believe members of the Syndicate have spread all across the world and we need your help to track them down.")
 
-	gameState.BuildGame(country)
-	fmt.Printf("We estimate %d Syndicate members are currently in the area.\n", len(gameState.Criminals))
+	// Build the game
+	gameState.BuildGame()
+	fmt.Printf("We know %d Syndicate members are currently in the area.\n", len(gameState.Criminals))
 
 	// REPL game loop
 	commands := commands.GetCommandMap()
@@ -49,6 +44,7 @@ func main() {
 		update := false
 		cmd, exists := commands[cleanText[0]]
 		if exists {
+			// TODO: Currently character locations are off-by-one time (only added on update, so won't appear during visit, but will appear one time after)
 			update, err = cmd.Callback(&gameState, cleanText[1:])
 			if err != nil {
 				fmt.Printf("%v\n", err)

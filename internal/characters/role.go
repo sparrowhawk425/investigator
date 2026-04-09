@@ -5,15 +5,6 @@ import (
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
-type Goal struct {
-	Progress int
-	Target   int
-}
-
-func (g Goal) IsComplete() bool {
-	return g.Progress >= g.Target
-}
-
 type Role struct {
 	Name         string
 	ActiveDuring times.TimeOfDay

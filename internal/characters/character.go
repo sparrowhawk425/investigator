@@ -109,6 +109,15 @@ type Characteristics struct {
 	HairLength  HairLength
 }
 
+type Goal struct {
+	Progress int
+	Target   int
+}
+
+func (g Goal) IsComplete() bool {
+	return g.Progress >= g.Target
+}
+
 type name struct {
 	first string
 	last  string
@@ -121,6 +130,7 @@ type Character struct {
 
 	Role        Role
 	Behavior    Behavior
+	Goal        Goal
 	possessions []gameobjects.Loot
 }
 
@@ -151,17 +161,24 @@ func (c *Character) SetLastName(last string) {
 
 func (c Character) Print() {
 
-	fmt.Printf("  First Name: %s\n", c.GetFirstName())
-	fmt.Printf("  Last Name: %s\n", c.GetLastName())
-	fmt.Printf("  Gender: %s\n", c.Traits.Gender)
-	fmt.Printf("  Nationality: %s\n", c.Traits.Nationality)
-	fmt.Printf("  Age: %d\n", c.Traits.Dob.Age)
-	fmt.Printf("  Height: %s\n", c.Traits.Height)
-	fmt.Printf("  Weight: %s\n", c.Traits.Weight)
-	fmt.Printf("  Eye Color: %s\n", c.Traits.EyeColor)
-	fmt.Printf("  Hair Color: %s\n", c.Traits.HairColor)
-	fmt.Printf("  Hair Length: %s\n", c.Traits.HairLength)
-	fmt.Printf("  Shoe Size: %s\n", c.Traits.ShoeSize)
+	fmt.Printf("%s\n", c.GetName())
+	fmt.Printf(" - Gender: %s\n", c.Traits.Gender)
+	fmt.Printf(" - Nationality: %s\n", c.Traits.Nationality)
+	//fmt.Printf(" - Age: %d\n", c.Traits.Dob.Age)
+	fmt.Printf(" - Height: %s\n", c.Traits.Height)
+	fmt.Printf(" - Weight: %s\n", c.Traits.Weight)
+	fmt.Printf(" - Eye Color: %s\n", c.Traits.EyeColor)
+	fmt.Printf(" - Hair Color: %s\n", c.Traits.HairColor)
+	fmt.Printf(" - Hair Length: %s\n", c.Traits.HairLength)
+	fmt.Printf(" - Shoe Size: %s\n", c.Traits.ShoeSize)
+
+	if len(c.possessions) > 0 {
+		fmt.Println("\nItems:")
+		for _, item := range c.possessions {
+			fmt.Printf("%d %s\n", item.Quantity, item.Type)
+		}
+	}
+	fmt.Println("")
 }
 
 func (c Character) GetPreferredLoot() []gameobjects.LootType {
@@ -196,19 +213,41 @@ func (c Character) GetPossessions() []gameobjects.Loot {
 	return c.possessions
 }
 
-func (c *Character) UpdatePossessions(lootType gameobjects.LootType, amt int) {
-	c.possessions = append(c.possessions, gameobjects.Loot{
-		Type:     lootType,
-		Quantity: amt,
-		Value:    lootType.GetValue(),
-	})
+func (c *Character) UpdatePossessions(loot gameobjects.Loot) {
+	c.possessions = append(c.possessions, loot)
 }
 
 func (c *Character) PerformAction(gs GameStateI) {
-	// Select the appropriate action to perform
-	action := ActionFSM(&c.Role, c.Behavior, gs)
+	// Select an appropriate action
+	action := c.selectAction(gs)
 	// Perform the selected action
 	action.Act(gs, c)
+}
+
+func (c *Character) selectAction(gs GameStateI) Action {
+
+	// If it's time to sleep
+	if gs.GetTimeOfDay() == c.Role.SleepDuring {
+		return CreateSleepAction()
+	}
+	// If it's time to take action
+	if gs.GetTimeOfDay() == c.Role.ActiveDuring {
+		// If they have a target
+		if c.Role.target != nil {
+			return c.Role.RoleAction
+		}
+		// Find a target and perform recon
+		targets := gs.GetLocationsByType(c.Role.targetLocations)
+		targets = c.Behavior.FilterLocations(targets)
+		if len(targets) == 0 {
+			targets = gs.GetLocationsByLootType(c.Role.preferredLoot)
+		}
+		target := targets[rand.IntN(len(targets))]
+		c.Role.target = &target
+		return CreateReconAction()
+	}
+	// Not doing anything else, so rest
+	return c.Role.RestAction
 }
 
 func CreateRandomCharacter(apiChar nameapi.Character) Character {

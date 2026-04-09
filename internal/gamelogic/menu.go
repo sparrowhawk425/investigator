@@ -45,16 +45,6 @@ type FilterFunc[T any] func(T, int) bool
 // 	return nil
 // }
 
-func filter[T any](items []T, fn func(item T, i int) bool) []T {
-	filteredItems := []T{}
-	for i, value := range items {
-		if fn(value, i) {
-			filteredItems = append(filteredItems, value)
-		}
-	}
-	return filteredItems
-}
-
 func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, items []T, filterTypes []FilterType) int {
 
 	// TODO: Figure out how to set up generic filter function selectors
@@ -71,7 +61,7 @@ func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, ite
 		for i, mItem := range menuItems {
 			fmt.Printf("%d. %s\n", i+1, mItem)
 		}
-		fmt.Print("Select an item> ")
+		fmt.Print("Select an item > ")
 		scanner.Scan()
 		var err error
 		idx, err = strconv.Atoi(scanner.Text())

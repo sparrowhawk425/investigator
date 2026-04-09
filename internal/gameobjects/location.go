@@ -100,6 +100,7 @@ type Location struct {
 	Visitors   []Person
 
 	quality Quality
+	money   int
 	loot    []Loot
 	clues   []string
 }
@@ -128,6 +129,18 @@ func (loc Location) Equals(other Location) bool {
 	}
 	return true
 }
+
+func (loc Location) Print() {
+	fmt.Printf("%s %s:\n", loc.quality, loc.Type)
+	fmt.Printf("%s\n", loc.GetAddress())
+
+	fmt.Println("Notable Loot:")
+	for _, loot := range loc.GetAvailableLoot() {
+		fmt.Printf(" - %s\n", loot)
+	}
+	fmt.Println("")
+}
+
 func (loc Location) GetAddress() string {
 	return fmt.Sprintf("%s %s:\n\t%d %s\n\t%s, %s", loc.quality.String(), loc.Type, loc.Address.Number, loc.Address.Name, loc.City, loc.State)
 }
@@ -159,13 +172,35 @@ func (loc Location) GetLootAmount(lootType LootType) int {
 	return 0
 }
 
-func (loc *Location) UpdateLoot(lootType LootType, amount int) {
+func (loc *Location) AddLoot(lootType LootType, amount int) {
+	loc.UpdateLoot(lootType, amount)
+}
+
+func (loc *Location) GiveLoot(lootType LootType, amount int) Loot {
+	value := loc.UpdateLoot(lootType, -1*amount)
+	return Loot{Type: lootType, Quantity: amount, Value: value}
+}
+
+func (loc *Location) UpdateLoot(lootType LootType, amount int) int {
 	for i := range loc.loot {
 		if loc.loot[i].Type == lootType {
 			loc.loot[i].Quantity += amount
-			return
+			value := loc.loot[i].Value
+			if loc.loot[i].Quantity == 0 {
+				loc.loot = slices.Delete(loc.loot, i, i)
+			}
+			return value
 		}
 	}
+	// If it wasn't found, add a new one
+	if amount > 0 {
+		value := lootType.GetValue()
+		loc.loot = append(loc.loot, Loot{
+			Type: lootType, Quantity: amount, Value: value,
+		})
+		return value
+	}
+	return 0
 }
 
 func (loc *Location) AddClue(clue string) {

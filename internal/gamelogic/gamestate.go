@@ -39,7 +39,13 @@ func (gs *GameState) NextDay() {
 	gs.WeekDay = gs.WeekDay.NextDay()
 }
 
-func (gs *GameState) BuildGame(country nameapi.Country) {
+func (gs *GameState) BuildGame() {
+
+	// Select country
+	countryNames := lo.Map(nameapi.Countries, func(country nameapi.Country, i int) string { return country.Name })
+	idx := MenuSelect(gs.Scanner, "Select a Country to begin your investigation:", countryNames)
+	country := nameapi.Countries[idx]
+	fmt.Printf("Travelling to %s...\n", country.Name)
 	// Add locations and people to game
 	results, err := nameapi.MakeHTTPGetRequest(country, 20)
 	if err != nil {
@@ -60,7 +66,7 @@ func (gs *GameState) BuildGame(country nameapi.Country) {
 
 	for range 2 {
 		num := rand.IntN(len(gs.People))
-		gs.People[num].Role = characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))]
+		gs.People[num].Role = characters.CreateBurglar() //characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))]
 		gs.Criminals = append(gs.Criminals, gs.People[num])
 	}
 }

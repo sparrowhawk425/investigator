@@ -68,6 +68,12 @@ func GetCommandMap() map[string]cliCommand {
 			advancesTime: true,
 			Callback:     commandVisitLocation,
 		},
+		"enemies": {
+			name:         "enemies",
+			description:  "View info about enemies",
+			advancesTime: false,
+			Callback:     commandDebugEnemies,
+		},
 	}
 	return commandMap
 }
@@ -114,50 +120,14 @@ func commandLocations(gs *gamelogic.GameState, params []string) (bool, error) {
 		locations = gs.GetLocationsByType(locTypes)
 	}
 	for _, loc := range locations {
-		switch loc.Type {
-		case gameobjects.Residence:
-			fmt.Printf("%s residence located at:\n", loc.GetQualityStr())
-		case gameobjects.Bank:
-			fmt.Printf("%s bank located at:\n", loc.GetQualityStr())
-		case gameobjects.Business:
-			fmt.Printf("%s local business located at:\n", loc.GetQualityStr())
-		case gameobjects.Hotel:
-			fmt.Printf("%s hotel located at:\n", loc.GetQualityStr())
-		case gameobjects.Museum:
-			fmt.Printf("%s local museum located at:\n", loc.GetQualityStr())
-		case gameobjects.Store:
-			fmt.Printf("%s local store located at:\n", loc.GetQualityStr())
-		default:
-			fmt.Println("Something undefinable located at:")
-		}
-		fmt.Printf("%d %s\n%s, %s, %s %s\n", loc.Address.Number, loc.Address.Name, loc.City, loc.State, loc.Country, loc.PostCode)
-		fmt.Println("Notable Loot:")
-		for _, loot := range loc.GetAvailableLoot() {
-			fmt.Printf(" - %s\n", loot)
-		}
-		fmt.Println("")
+		loc.Print()
 	}
 	return false, nil
 }
 
 func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
 	for _, person := range gs.People {
-		fmt.Printf("%s, %s:\n", person.GetName(), person.Traits.Gender)
-		fmt.Printf("Age: %d\n", person.Traits.Dob.Age)
-		fmt.Printf("Eyes: %s\n", person.Traits.EyeColor)
-		fmt.Printf("Hair: %s\n", person.Traits.HairColor)
-		fmt.Printf("Height: %s\n", person.Traits.Height)
-		fmt.Printf("Weight: %s\n", person.Traits.Weight)
-		fmt.Printf("Nationality: %s\n", person.Traits.Nationality)
-		fmt.Printf("Job: %s\n", person.Role.Name)
-		possessions := person.GetPossessions()
-		if len(possessions) > 0 {
-			fmt.Println("Possessions:")
-			for _, item := range possessions {
-				fmt.Printf(" - %s: %d\n", item.Type, item.Quantity)
-			}
-		}
-		fmt.Println("")
+		person.Print()
 	}
 	return false, nil
 }
@@ -184,12 +154,12 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	gs.Player.CurrentLocation = loc
 	fmt.Println(loc.GetAddress())
 
-	// if len(loc.Visitors) > 0 {
-	// 	fmt.Println("People:")
-	// 	for _, person := range loc.Visitors {
-	// 		fmt.Printf(" - %s", person.GetName())
-	// 	}
-	// }
+	if len(loc.Visitors) > 0 {
+		fmt.Println("People:")
+		for _, person := range loc.Visitors {
+			fmt.Printf(" - %s\n", person.GetName())
+		}
+	}
 	if len(loc.GetAvailableLoot()) > 0 {
 		fmt.Println("Loot:")
 		for _, loot := range loc.GetAvailableLoot() {
@@ -200,11 +170,18 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	if len(loc.GetClues()) > 0 {
 		fmt.Println("Clues:")
 		for _, clue := range loc.GetClues() {
-			fmt.Printf(" - %s", clue)
+			fmt.Printf(" - %s\n", clue)
 		}
 	}
 
 	return true, nil
+}
+
+func commandDebugEnemies(gs *gamelogic.GameState, _ []string) (bool, error) {
+	for _, c := range gs.Criminals {
+		c.Print()
+	}
+	return false, nil
 }
 
 func commandNext(gs *gamelogic.GameState, _ []string) (bool, error) {
