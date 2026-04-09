@@ -10,6 +10,57 @@ import (
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
 )
 
+type Gender string
+
+const (
+	MaleGender   Gender = "Male"
+	FemaleGender Gender = "Female"
+	UnkownGender Gender = "Unknown"
+)
+
+var Genders = []Gender{
+	MaleGender, FemaleGender,
+}
+
+func (g Gender) String() string {
+	return string(g)
+}
+
+type Nationality string
+
+const (
+	Australia          Nationality = "AU"
+	Brazil             Nationality = "BR"
+	Canada             Nationality = "CA"
+	Switzerland        Nationality = "CH"
+	Germany            Nationality = "DE"
+	Denmark            Nationality = "DK"
+	Spain              Nationality = "ES"
+	Finland            Nationality = "FI"
+	France             Nationality = "FR"
+	GreatBritain       Nationality = "GB"
+	Ireland            Nationality = "IE"
+	India              Nationality = "IN"
+	Mexico             Nationality = "MX"
+	Netherlands        Nationality = "NL"
+	Norway             Nationality = "NO"
+	NewZealand         Nationality = "NZ"
+	Serbia             Nationality = "RS"
+	Türkiye            Nationality = "TR"
+	Ukraine            Nationality = "UA"
+	UnitedStates       Nationality = "US"
+	UnknownNationality Nationality = "XX"
+)
+
+var Nationalities = []Nationality{
+	Australia, Brazil, Canada, Switzerland, Germany, Denmark, Spain, Finland, GreatBritain,
+	Ireland, India, Mexico, Netherlands, Norway, NewZealand, Serbia, Türkiye, Ukraine, UnitedStates,
+}
+
+func (n Nationality) String() string {
+	return string(n)
+}
+
 type EyeColor string
 
 const (
@@ -26,6 +77,10 @@ const (
 
 var EyeColors = []EyeColor{
 	BlueEyes, GreenEyes, BrownEyes, AmberEyes, HazelEyes, GrayEyes,
+}
+
+func (ec EyeColor) String() string {
+	return string(ec)
 }
 
 type HairColor string
@@ -47,17 +102,8 @@ var HairColors = []HairColor{
 	BlondHair, DarkBlondHair, MediumBrownHair, DarkBrownHair, BlackHair, AuburnHair, RedHair, GrayHair, WhiteHair,
 }
 
-type ShoeSize string
-
-const (
-	SmallShoe   ShoeSize = "Small"
-	MediumShoe  ShoeSize = "Medium"
-	LargeShoe   ShoeSize = "Large"
-	UnknownShoe ShoeSize = "Unknown"
-)
-
-var ShoeSizes = []ShoeSize{
-	SmallShoe, MediumShoe, LargeShoe,
+func (hc HairColor) String() string {
+	return string(hc)
 }
 
 type HairLength string
@@ -74,6 +120,27 @@ var HairLengths = []HairLength{
 	BaldHair, ShortHair, MediumHair, LongHair,
 }
 
+func (hl HairLength) String() string {
+	return string(hl)
+}
+
+type ShoeSize string
+
+const (
+	SmallShoe   ShoeSize = "Small"
+	MediumShoe  ShoeSize = "Medium"
+	LargeShoe   ShoeSize = "Large"
+	UnknownShoe ShoeSize = "Unknown"
+)
+
+var ShoeSizes = []ShoeSize{
+	SmallShoe, MediumShoe, LargeShoe,
+}
+
+func (ss ShoeSize) String() string {
+	return string(ss)
+}
+
 type Height string
 
 const (
@@ -82,6 +149,14 @@ const (
 	TallHeight    Height = "Tall"
 	UnknownHeight Height = "Unknown"
 )
+
+var Heights = []Height{
+	ShortHeight, AverageHeight, TallHeight,
+}
+
+func (h Height) String() string {
+	return string(h)
+}
 
 type Weight string
 
@@ -92,6 +167,14 @@ const (
 	UnknownWeight Weight = "Unknown"
 )
 
+var Weights = []Weight{
+	ThinWeight, AverageWeight, OverWeight,
+}
+
+func (w Weight) String() string {
+	return string(w)
+}
+
 type DateOfBirth struct {
 	Date time.Time `json:"date"`
 	Age  int
@@ -99,8 +182,8 @@ type DateOfBirth struct {
 
 type Characteristics struct {
 	Dob         DateOfBirth
-	Nationality string
-	Gender      string
+	Nationality Nationality
+	Gender      Gender
 	EyeColor    EyeColor
 	HairColor   HairColor
 	Height      Height
@@ -264,10 +347,10 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 				Date: apiChar.DateOfBirth.Date,
 				Age:  apiChar.DateOfBirth.Age,
 			},
-			Nationality: apiChar.Nationality,
+			Nationality: Nationality(apiChar.Nationality),
 			EyeColor:    eyeColor,
 			HairColor:   hairColor,
-			Gender:      apiChar.Gender,
+			Gender:      Gender(apiChar.Gender),
 			Height:      getHeight(apiChar.Gender),
 			Weight:      getWeight(apiChar.Gender),
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],

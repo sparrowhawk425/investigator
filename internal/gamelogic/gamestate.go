@@ -19,7 +19,7 @@ type GameState struct {
 	DayNumber int
 	WeekDay   times.DayOfTheWeek
 	TimeOfDay times.TimeOfDay
-	Player    Player
+	Player    characters.Player
 	Places    []gameobjects.Location
 	People    []characters.Character
 	Criminals []characters.Character
