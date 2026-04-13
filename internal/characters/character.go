@@ -3,6 +3,7 @@ package characters
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"strings"
 	"time"
 
@@ -186,15 +187,21 @@ type Characteristics struct {
 	Gender      Gender
 	EyeColor    EyeColor
 	HairColor   HairColor
+	HairLength  HairLength
 	Height      Height
 	Weight      Weight
 	ShoeSize    ShoeSize
-	HairLength  HairLength
 }
 
 type Goal struct {
 	Progress int
 	Target   int
+}
+
+func (g *Goal) Update(loot gameobjects.Loot) {
+	if loot.Type == gameobjects.Money {
+		g.Progress += loot.Value * loot.Quantity
+	}
 }
 
 func (g Goal) IsComplete() bool {
@@ -296,8 +303,17 @@ func (c Character) GetPossessions() []gameobjects.Loot {
 	return c.possessions
 }
 
-func (c *Character) UpdatePossessions(loot gameobjects.Loot) {
+func (c *Character) AddPossessions(loot gameobjects.Loot) {
 	c.possessions = append(c.possessions, loot)
+	c.Goal.Update(loot)
+}
+
+func (c *Character) RemovePossessions(loot gameobjects.Loot) {
+	c.possessions = slices.DeleteFunc(c.possessions, func(lt gameobjects.Loot) bool {
+		return lt.Type == loot.Type && lt.Quantity == loot.Quantity && lt.Value == loot.Value
+	})
+	loot.Value *= -1
+	c.Goal.Update(loot)
 }
 
 func (c *Character) PerformAction(gs GameStateI) {
@@ -432,9 +448,18 @@ func (c Character) CreateClue() string {
 			return fmt.Sprintf("There's a %s %s stray hair recovered from the crime scene.", c.Traits.HairLength, c.Traits.HairColor)
 		}
 	case clueHeight:
-		return ""
+		return fmt.Sprintf("A security guard says the figure's height was %s", c.Traits.Height)
 	case clueWeight:
-		return ""
+		switch c.Traits.Weight {
+		case ThinWeight:
+			return fmt.Sprintf("A security guard says the figure was %s", c.Traits.Weight)
+		case AverageWeight:
+			return fmt.Sprintf("A security guard says the figure was %s weight", c.Traits.Weight)
+		case OverWeight:
+			return fmt.Sprintf("A security guard says the figure was %sset", c.Traits.Weight)
+		default:
+			return "The figure was of indeterminable weight"
+		}
 	case clueShoeSize:
 		return fmt.Sprintf("A footprint recovered from the crime scene reveals the figure had %s shoes", c.Traits.ShoeSize)
 	default:

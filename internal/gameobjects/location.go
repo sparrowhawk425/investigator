@@ -131,18 +131,34 @@ func (loc Location) Equals(other Location) bool {
 }
 
 func (loc Location) Print() {
-	fmt.Printf("%s %s:\n", loc.quality, loc.Type)
 	fmt.Printf("%s\n", loc.GetAddress())
 
-	fmt.Println("Notable Loot:")
-	for _, loot := range loc.GetAvailableLoot() {
-		fmt.Printf(" - %s\n", loot)
+	if len(loc.GetAvailableLoot()) == 0 {
+		fmt.Println("Notable Loot: None")
+	} else {
+		fmt.Println("Notable Loot:")
+		for _, loot := range loc.GetAvailableLoot() {
+			fmt.Printf(" - %s\n", loot)
+		}
+	}
+	if len(loc.Visitors) > 0 {
+		fmt.Println("People:")
+		for _, person := range loc.Visitors {
+			fmt.Printf(" - %s\n", person.GetName())
+		}
+	}
+	if len(loc.GetClues()) > 0 {
+		fmt.Println("Clues:")
+		for _, clue := range loc.GetClues() {
+			fmt.Printf(" - %s\n", clue)
+		}
 	}
 	fmt.Println("")
 }
 
 func (loc Location) GetAddress() string {
-	return fmt.Sprintf("%s %s:\n\t%d %s\n\t%s, %s", loc.quality.String(), loc.Type, loc.Address.Number, loc.Address.Name, loc.City, loc.State)
+	desc := fmt.Sprintf("%s %s", loc.quality, loc.Type)
+	return fmt.Sprintf("%s: %d %s, %s, %s", desc, loc.Address.Number, loc.Address.Name, loc.City, loc.State)
 }
 
 func (loc Location) GetQuality() Quality {

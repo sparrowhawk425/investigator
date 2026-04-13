@@ -2,6 +2,7 @@ package characters
 
 import (
 	"fmt"
+	"log"
 	"math/rand/v2"
 
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
@@ -114,6 +115,14 @@ func CreateFenceAction() Action {
 	}
 }
 
+func CreateEscapeAction() Action {
+	return Action{
+		Name: "Escaping",
+		Risk: 0,
+		Act:  EscapeAction,
+	}
+}
+
 // Perform Actions
 
 func SleepAction(gs GameStateI, person *Character) {
@@ -153,44 +162,12 @@ func ReconAction(gs GameStateI, person *Character) {
 }
 
 func BurgleAction(gs GameStateI, person *Character) {
-	fmt.Println("Burgling...")
+	log.Println("Burgling...")
 
 	takeLoot(gs, "Burglary", person)
 
 	// Enemy needs new target
 	person.SetTarget(nil)
-}
-
-// TODO: There seem to be an inordinate amount of zeros returned from rand...
-func takeLoot(gs GameStateI, crime string, person *Character) {
-
-	gs.AddCharacterToLocation(*person.GetTarget(), *person)
-	stolenLoot := []gameobjects.Loot{}
-	for _, lootType := range person.GetPreferredLoot() {
-		maxLoot := person.GetTarget().GetLootAmount(lootType)
-		// Take a random amount of the available loot
-		if maxLoot > 0 {
-			amt := rand.IntN(maxLoot + 1)
-			if amt > 0 {
-				fmt.Printf("%d %s be stolen from %s\n", amt, lootType, person.GetTarget().GetAddress())
-				spoils := person.GetTarget().GiveLoot(lootType, amt)
-				spoils.IsStolen = true
-				person.UpdatePossessions(spoils)
-				for _, item := range person.GetPossessions() {
-					fmt.Printf(" - %d %s\n", item.Quantity, item.Type)
-				}
-				stolenLoot = append(stolenLoot, spoils)
-			}
-		}
-	}
-	if len(stolenLoot) > 0 {
-		gs.CreateCrime(*person.GetTarget(), crime, stolenLoot)
-		riskPct := person.Role.RoleAction.Risk + person.GetTarget().GetRiskPercent()
-		num := rand.IntN(100) + 1
-		if riskPct > num {
-			person.GetTarget().AddClue(person.CreateClue())
-		}
-	}
 }
 
 func RobAction(gs GameStateI, person *Character) {
@@ -210,4 +187,47 @@ func FenceAction(gs GameStateI, person *Character) {
 	fmt.Println("Fencing...")
 
 	gs.AddCharacterToLocation(person.Address, *person)
+}
+
+func EscapeAction(gs GameStateI, person *Character) {
+	fmt.Println("Escaping...")
+
+	fmt.Println("A member of the Syndicate has left the area...")
+}
+
+// Helpers
+
+// TODO: There seem to be an inordinate amount of zeros returned from rand...
+func takeLoot(gs GameStateI, crime string, person *Character) {
+
+	fmt.Printf("%s be coming to take the loots\n", person.GetName())
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
+	stolenLoot := []gameobjects.Loot{}
+	for _, lootType := range person.GetPreferredLoot() {
+		maxLoot := person.GetTarget().GetLootAmount(lootType)
+		// Take a random amount of the available loot
+		if maxLoot > 0 {
+			amt := rand.IntN(maxLoot + 1)
+			if amt > 0 {
+				fmt.Printf("%d %s be stolen from %s\n", amt, lootType, person.GetTarget().GetAddress())
+				spoils := person.GetTarget().GiveLoot(lootType, amt)
+				spoils.IsStolen = true
+				person.AddPossessions(spoils)
+				for _, item := range person.GetPossessions() {
+					fmt.Printf(" - %d %s\n", item.Quantity, item.Type)
+				}
+				stolenLoot = append(stolenLoot, spoils)
+			}
+		}
+	}
+	if len(stolenLoot) > 0 {
+		gs.CreateCrime(*person.GetTarget(), crime, stolenLoot)
+		riskPct := person.Role.RoleAction.Risk + person.GetTarget().GetRiskPercent()
+		num := rand.IntN(100) + 1
+		fmt.Printf("Risk Percent: %d, Actual: %d\n", riskPct, num)
+		if riskPct > num {
+			// TODO: This doesn't seem to be storing them in the gamestate
+			person.GetTarget().AddClue(person.CreateClue())
+		}
+	}
 }

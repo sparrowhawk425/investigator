@@ -16,13 +16,9 @@ type Dossier struct {
 
 type Player struct {
 	Name            string
-	CurrentLocation gameobjects.Location
+	CurrentLocation *gameobjects.Location
 	Dossiers        []Dossier
 	Action          *Action
-}
-
-func VisitAction(gs *GameStateI) {
-
 }
 
 const unknown = "Unknown"

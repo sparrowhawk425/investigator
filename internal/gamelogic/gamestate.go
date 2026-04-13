@@ -125,6 +125,10 @@ func (gs *GameState) Update() {
 		// 	os.Exit(0)
 		// }
 	}
+	if gs.Player.CurrentLocation != nil {
+		fmt.Printf("%s is currently at:\n", gs.Player.Name)
+		gs.Player.CurrentLocation.Print()
+	}
 	for _, place := range gs.Places {
 		if len(place.Visitors) > 0 {
 			for _, visitor := range place.Visitors {

@@ -33,6 +33,11 @@ func main() {
 	commands := commands.GetCommandMap()
 	var err error
 	for {
+		if len(gameState.Criminals) == 0 {
+			fmt.Println("Congratulations! You have caught all the Synidcate members in the area!")
+			fmt.Println("You Win!") // TODO: Expand to move to another region, chasing bosses
+			return
+		}
 		gameState.PrintDay()
 
 		// Get player input
