@@ -223,7 +223,7 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 	if len(stolenLoot) > 0 {
 		gs.CreateCrime(*person.GetTarget(), crime, stolenLoot)
 		riskPct := person.Role.RoleAction.Risk + person.GetTarget().GetRiskPercent()
-		num := rand.IntN(100) + 1
+		num := rand.IntN(101)
 		fmt.Printf("Risk Percent: %d, Actual: %d\n", riskPct, num)
 		if riskPct > num {
 			// TODO: This doesn't seem to be storing them in the gamestate

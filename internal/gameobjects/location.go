@@ -101,7 +101,7 @@ type Location struct {
 
 	quality Quality
 	money   int
-	loot    []Loot
+	loot    map[LootType]Loot
 	clues   []string
 }
 
@@ -193,30 +193,18 @@ func (loc *Location) AddLoot(lootType LootType, amount int) {
 }
 
 func (loc *Location) GiveLoot(lootType LootType, amount int) Loot {
-	value := loc.UpdateLoot(lootType, -1*amount)
-	return Loot{Type: lootType, Quantity: amount, Value: value}
+	loc.UpdateLoot(lootType, -1*amount)
+	return Loot{Type: lootType, Quantity: amount, Value: lootType.GetValue()}
 }
 
-func (loc *Location) UpdateLoot(lootType LootType, amount int) int {
-	for i := range loc.loot {
-		if loc.loot[i].Type == lootType {
-			loc.loot[i].Quantity += amount
-			value := loc.loot[i].Value
-			if loc.loot[i].Quantity == 0 {
-				loc.loot = slices.Delete(loc.loot, i, i)
-			}
-			return value
-		}
+func (loc *Location) UpdateLoot(lootType LootType, amount int) {
+	loot, ok := loc.loot[lootType]
+	if !ok {
+		loc.loot[lootType] = Loot{Type: lootType, Value: lootType.GetValue()}
+		loot = loc.loot[lootType]
 	}
-	// If it wasn't found, add a new one
-	if amount > 0 {
-		value := lootType.GetValue()
-		loc.loot = append(loc.loot, Loot{
-			Type: lootType, Quantity: amount, Value: value,
-		})
-		return value
-	}
-	return 0
+	loot.Quantity += amount
+	loc.loot[lootType] = loot
 }
 
 func (loc *Location) AddClue(clue string) {
@@ -323,7 +311,7 @@ func parsePostCode(data []byte) string {
 	return string(data)
 }
 
-func setAvailableLoot(locType LocationType, quality Quality) []Loot {
+func setAvailableLoot(locType LocationType, quality Quality) map[LootType]Loot {
 	maxAmt := 1
 	switch quality {
 	case Cheap:
@@ -333,40 +321,40 @@ func setAvailableLoot(locType LocationType, quality Quality) []Loot {
 	case Expensive:
 		maxAmt = 10
 	}
-	loot := []Loot{}
+	loot := make(map[LootType]Loot)
 	switch locType {
 	case Residence:
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt), Value: Jewelry.GetValue()})
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()})
-		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt), Value: Electronics.GetValue()})
-		loot = append(loot, Loot{Type: Cars, Quantity: rand.IntN(maxAmt), Value: Cars.GetValue()})
+		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt), Value: Jewelry.GetValue()}
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()}
+		loot[Electronics] = Loot{Type: Electronics, Quantity: rand.IntN(maxAmt), Value: Electronics.GetValue()}
+		loot[Cars] = Loot{Type: Cars, Quantity: rand.IntN(maxAmt), Value: Cars.GetValue()}
 	case Bank:
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 3), Value: Jewelry.GetValue()})
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 3), Value: Money.GetValue()})
+		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 3), Value: Jewelry.GetValue()}
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt * 3), Value: Money.GetValue()}
 	case Museum:
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2), Value: Jewelry.GetValue()})
-		loot = append(loot, Loot{Type: Art, Quantity: rand.IntN(maxAmt * 2), Value: Art.GetValue()})
+		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2), Value: Jewelry.GetValue()}
+		loot[Art] = Loot{Type: Art, Quantity: rand.IntN(maxAmt * 2), Value: Art.GetValue()}
 	case Hotel:
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2), Value: Jewelry.GetValue()})
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()})
-		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 2), Value: Electronics.GetValue()})
+		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 2), Value: Jewelry.GetValue()}
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()}
+		loot[Electronics] = Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 2), Value: Electronics.GetValue()}
 	case Store:
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2), Value: Money.GetValue()})
-		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 3), Value: Electronics.GetValue()})
-		loot = append(loot, Loot{Type: Cars, Quantity: rand.IntN(maxAmt * 3), Value: Cars.GetValue()})
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2), Value: Money.GetValue()}
+		loot[Electronics] = Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 3), Value: Electronics.GetValue()}
+		loot[Cars] = Loot{Type: Cars, Quantity: rand.IntN(maxAmt * 3), Value: Cars.GetValue()}
 	case Business:
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()})
-		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 4), Value: Electronics.GetValue()})
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()}
+		loot[Electronics] = Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 4), Value: Electronics.GetValue()}
 	case Casino:
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 4), Value: Money.GetValue()})
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 4), Value: Jewelry.GetValue()})
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt * 4), Value: Money.GetValue()}
+		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 4), Value: Jewelry.GetValue()}
 	case Restaurant:
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()})
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt), Value: Money.GetValue()}
 	case PawnShop:
-		loot = append(loot, Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2), Value: Money.GetValue()})
-		loot = append(loot, Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 3), Value: Jewelry.GetValue()})
-		loot = append(loot, Loot{Type: Art, Quantity: rand.IntN(maxAmt * 2), Value: Art.GetValue()})
-		loot = append(loot, Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 2), Value: Electronics.GetValue()})
+		loot[Money] = Loot{Type: Money, Quantity: rand.IntN(maxAmt * 2), Value: Money.GetValue()}
+		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt * 3), Value: Jewelry.GetValue()}
+		loot[Art] = Loot{Type: Art, Quantity: rand.IntN(maxAmt * 2), Value: Art.GetValue()}
+		loot[Electronics] = Loot{Type: Electronics, Quantity: rand.IntN(maxAmt * 2), Value: Electronics.GetValue()}
 	}
 	return loot
 }

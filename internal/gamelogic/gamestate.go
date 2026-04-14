@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand/v2"
+	"slices"
 
 	"github.com/samber/lo"
 
@@ -64,10 +65,15 @@ func (gs *GameState) BuildGame() {
 		gs.People[i].FindTarget(gs)
 	}
 
+	cIdxs := []int{}
 	for range 2 {
-		num := rand.IntN(len(gs.People))
+		num := -1
+		for num < 0 || slices.Contains(cIdxs, num) {
+			num = rand.IntN(len(gs.People))
+		}
 		gs.People[num].Role = characters.CreateBurglar() //characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))]
 		gs.Criminals = append(gs.Criminals, gs.People[num])
+		cIdxs = append(cIdxs, num)
 	}
 }
 
