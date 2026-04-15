@@ -3,7 +3,6 @@ package characters
 import (
 	"fmt"
 	"math/rand/v2"
-	"slices"
 	"strings"
 	"time"
 
@@ -221,7 +220,7 @@ type Character struct {
 	Role        Role
 	Behavior    Behavior
 	Goal        Goal
-	possessions []gameobjects.Loot
+	possessions map[gameobjects.LootType]gameobjects.Loot
 }
 
 func (c Character) GetName() string {
@@ -287,7 +286,6 @@ func (c *Character) SetTarget(loc *gameobjects.Location) {
 	c.Role.target = loc
 }
 
-// TODO: This is redundant with ActionFSM (but on a different layer: role vs character)
 func (c *Character) FindTarget(gs GameStateI) {
 
 	targets := gs.GetLocationsByType(c.Role.targetLocations)
@@ -299,20 +297,28 @@ func (c *Character) FindTarget(gs GameStateI) {
 	c.SetTarget(&target)
 }
 
-func (c Character) GetPossessions() []gameobjects.Loot {
+func (c Character) GetPossessions() map[gameobjects.LootType]gameobjects.Loot {
 	return c.possessions
 }
 
-func (c *Character) AddPossessions(loot gameobjects.Loot) {
-	c.possessions = append(c.possessions, loot)
-	c.Goal.Update(loot)
+func (c *Character) AddPossessions(lootType gameobjects.LootType, amount int, isStolen bool) {
+	c.updatePossessions(lootType, amount, isStolen)
 }
 
-func (c *Character) RemovePossessions(loot gameobjects.Loot) {
-	c.possessions = slices.DeleteFunc(c.possessions, func(lt gameobjects.Loot) bool {
-		return lt.Type == loot.Type && lt.Quantity == loot.Quantity && lt.Value == loot.Value
-	})
-	loot.Value *= -1
+func (c *Character) RemovePossessions(lootType gameobjects.LootType, amount int, isStolen bool) {
+	c.updatePossessions(lootType, amount, isStolen)
+}
+
+func (c *Character) updatePossessions(lootType gameobjects.LootType, amount int, isStolen bool) {
+	loot, ok := c.possessions[lootType]
+	if !ok {
+		c.possessions[lootType] = gameobjects.Loot{Type: lootType, Value: lootType.GetValue()}
+		loot = c.possessions[lootType]
+	}
+	loot.Quantity += amount
+	loot.IsStolen = isStolen
+	c.possessions[lootType] = loot
+
 	c.Goal.Update(loot)
 }
 
@@ -372,8 +378,9 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],
 			HairLength:  HairLengths[rand.IntN(len(HairLengths))],
 		},
-		Role:     RegularRoles[rand.IntN(len(RegularRoles))],
-		Behavior: RegularBehaviors[rand.IntN(len(RegularBehaviors))],
+		Role:        RegularRoles[rand.IntN(len(RegularRoles))],
+		Behavior:    RegularBehaviors[rand.IntN(len(RegularBehaviors))],
+		possessions: make(map[gameobjects.LootType]gameobjects.Loot),
 	}
 }
 
@@ -436,6 +443,7 @@ var clueItems = []clue{
 
 func (c Character) CreateClue() string {
 	clueItem := clueItems[rand.IntN(len(clueItems))]
+	fmt.Printf("Clue type: %d\n", clueItem)
 	switch clueItem {
 	case clueGender:
 		return fmt.Sprintf("A shot from a security camera clearly shows the figure is %s.", c.Traits.Gender)

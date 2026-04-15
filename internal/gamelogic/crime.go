@@ -20,6 +20,6 @@ func (c Crime) Print() {
 	fmt.Printf("%s at %s\n", c.Type, c.Location.GetAddress())
 	fmt.Println("Loot:")
 	for _, loot := range c.StolenLoot {
-		fmt.Printf("\t%s: %d\n", loot.Type, loot.Quantity)
+		fmt.Printf(" - %s: %d\n", loot.Type, loot.Quantity)
 	}
 }

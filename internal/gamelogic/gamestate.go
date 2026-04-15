@@ -101,7 +101,16 @@ func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, chara
 	for i := range gs.Places {
 		if gs.Places[i].Equals(location) {
 			gs.Places[i].Visitors = append(gs.Places[i].Visitors, character)
-			break
+			return
+		}
+	}
+}
+
+func (gs *GameState) CreateClue(location gameobjects.Location, clue string) {
+	for i := range gs.Places {
+		if gs.Places[i].Equals(location) {
+			gs.Places[i].AddClue(clue)
+			return
 		}
 	}
 }

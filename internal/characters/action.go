@@ -16,6 +16,7 @@ type GameStateI interface {
 	GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location
 	AddCharacterToLocation(location gameobjects.Location, character Character)
 	CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot)
+	CreateClue(location gameobjects.Location, clue string)
 }
 type Action struct {
 	Name string
@@ -212,7 +213,7 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 				fmt.Printf("%d %s be stolen from %s\n", amt, lootType, person.GetTarget().GetAddress())
 				spoils := person.GetTarget().GiveLoot(lootType, amt)
 				spoils.IsStolen = true
-				person.AddPossessions(spoils)
+				person.AddPossessions(spoils.Type, amt, true)
 				for _, item := range person.GetPossessions() {
 					fmt.Printf(" - %d %s\n", item.Quantity, item.Type)
 				}
@@ -223,11 +224,11 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 	if len(stolenLoot) > 0 {
 		gs.CreateCrime(*person.GetTarget(), crime, stolenLoot)
 		riskPct := person.Role.RoleAction.Risk + person.GetTarget().GetRiskPercent()
-		num := rand.IntN(101)
-		fmt.Printf("Risk Percent: %d, Actual: %d\n", riskPct, num)
-		if riskPct > num {
+		percent := rand.IntN(101)
+		fmt.Printf("Exposure Risk: %d, Actual: %d\n", riskPct, percent)
+		if riskPct > percent {
 			// TODO: This doesn't seem to be storing them in the gamestate
-			person.GetTarget().AddClue(person.CreateClue())
+			gs.CreateClue(*person.GetTarget(), person.CreateClue())
 		}
 	}
 }

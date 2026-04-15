@@ -59,7 +59,7 @@ func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, ite
 		}
 		fmt.Println(prompt)
 		for i, mItem := range menuItems {
-			fmt.Printf("% 2d. %s\n", i+1, mItem)
+			fmt.Printf("% 3d. %s\n", i+1, mItem)
 		}
 		fmt.Print("Select an item > ")
 		scanner.Scan()
@@ -85,7 +85,7 @@ func MenuSelect(scanner *bufio.Scanner, msg string, items []string) int {
 	for idx < 0 {
 		fmt.Println(msg)
 		for i, item := range items {
-			fmt.Printf("% 2d. %s\n", i+1, item)
+			fmt.Printf("% 3d. %s\n", i+1, item)
 		}
 		fmt.Print("Which number? > ")
 		scanner.Scan()

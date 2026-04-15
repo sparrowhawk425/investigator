@@ -137,8 +137,10 @@ func (loc Location) Print() {
 		fmt.Println("Notable Loot: None")
 	} else {
 		fmt.Println("Notable Loot:")
-		for _, loot := range loc.GetAvailableLoot() {
-			fmt.Printf(" - %s\n", loot)
+		for _, loot := range loc.loot {
+			if loot.Quantity > 0 {
+				fmt.Printf(" - %d %s\n", loot.Quantity, loot.Type)
+			}
 		}
 	}
 	if len(loc.Visitors) > 0 {
@@ -147,9 +149,9 @@ func (loc Location) Print() {
 			fmt.Printf(" - %s\n", person.GetName())
 		}
 	}
-	if len(loc.GetClues()) > 0 {
+	if len(loc.clues) > 0 {
 		fmt.Println("Clues:")
-		for _, clue := range loc.GetClues() {
+		for _, clue := range loc.clues {
 			fmt.Printf(" - %s\n", clue)
 		}
 	}
@@ -208,6 +210,7 @@ func (loc *Location) UpdateLoot(lootType LootType, amount int) {
 }
 
 func (loc *Location) AddClue(clue string) {
+	fmt.Printf("Adding %s clue to %d %s\n", clue, loc.Address.Number, loc.Address.Name)
 	loc.clues = append(loc.clues, clue)
 }
 
@@ -300,6 +303,19 @@ func CreateRandomLocations(apiLocations []nameapi.Location) []Location {
 		occupiedPct := rand.IntN(100)
 		locations[i] = CreateLocation(apiLoc, locType, occupiedPct > 5)
 	}
+	slices.SortFunc(locations, func(l1, l2 Location) int {
+		if l1.Address.Number < l2.Address.Number {
+			return -1
+		} else if l1.Address.Number > l2.Address.Number {
+			return 1
+		}
+		if l1.Address.Name < l2.Address.Name {
+			return -1
+		} else if l1.Address.Name > l2.Address.Name {
+			return 1
+		}
+		return 0
+	})
 	return locations
 }
 
