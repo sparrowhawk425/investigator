@@ -12,12 +12,16 @@ import (
 // Interface for the GameState to avoid circular import
 type GameStateI interface {
 	GetTimeOfDay() times.TimeOfDay
+	GetLocations() []gameobjects.Location
 	GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location
 	GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location
 	AddCharacterToLocation(location gameobjects.Location, character Character)
 	CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot)
 	CreateClue(location gameobjects.Location, clue string)
+	TransferItems(lootType gameobjects.LootType, amount int, isStolen bool, src gameobjects.ItemHolder, dest gameobjects.ItemHolder)
 }
+
+// TODO: Refactor actions to be more modular? Having a create method and second internal action function seems redundant. The name doesn't actually do anything
 type Action struct {
 	Name string
 	Risk int //percent
@@ -63,6 +67,22 @@ func CreateManagingAction() Action {
 		Name: "Managing",
 		Risk: 0,
 		Act:  ManagingAction,
+	}
+}
+
+func CreateEatingAction() Action {
+	return Action{
+		Name: "Eating",
+		Risk: 0,
+		Act:  EatingAction,
+	}
+}
+
+func CreateSellingAction() Action {
+	return Action{
+		Name: "Selling",
+		Risk: 0,
+		Act:  SellingAction,
 	}
 }
 
@@ -152,6 +172,19 @@ func ManagingAction(gs GameStateI, person *Character) {
 	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
+func EatingAction(gs GameStateI, person *Character) {
+	fmt.Println("Eating...")
+	gs.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.TransferItems(gameobjects.Money, 3, false, person, person.GetTarget())
+}
+
+func SellingAction(gs GameStateI, person *Character) {
+	fmt.Println("Selling...")
+	// TODO: How to get the right target?
+}
+
+// Criminal Actions
+
 func LieLowAction(gs GameStateI, person *Character) {
 	fmt.Println("Lying low...")
 }
@@ -211,13 +244,8 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 			amt := rand.IntN(maxLoot + 1)
 			if amt > 0 {
 				fmt.Printf("%d %s be stolen from %s\n", amt, lootType, person.GetTarget().GetAddress())
-				spoils := person.GetTarget().GiveLoot(lootType, amt)
-				spoils.IsStolen = true
-				person.AddPossessions(spoils.Type, amt, true)
-				for _, item := range person.GetPossessions() {
-					fmt.Printf(" - %d %s\n", item.Quantity, item.Type)
-				}
-				stolenLoot = append(stolenLoot, spoils)
+				gs.TransferItems(lootType, amt, true, person.GetTarget(), person)
+				stolenLoot = append(stolenLoot, gameobjects.Loot{Type: lootType, Quantity: amt, Value: lootType.GetValue(), IsStolen: true})
 			}
 		}
 	}
@@ -227,7 +255,6 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 		percent := rand.IntN(101)
 		fmt.Printf("Exposure Risk: %d, Actual: %d\n", riskPct, percent)
 		if riskPct > percent {
-			// TODO: This doesn't seem to be storing them in the gamestate
 			gs.CreateClue(*person.GetTarget(), person.CreateClue())
 		}
 	}

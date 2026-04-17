@@ -217,10 +217,14 @@ type Character struct {
 	Traits  Characteristics
 	Address gameobjects.Location
 
-	Role        Role
-	Behavior    Behavior
-	Goal        Goal
-	possessions map[gameobjects.LootType]gameobjects.Loot
+	Role     Role
+	Behavior Behavior
+	Goal     Goal
+
+	possessions gameobjects.Inventory
+
+	target     *gameobjects.Location
+	FindTarget func([]gameobjects.Location) *gameobjects.Location
 }
 
 func (c Character) GetName() string {
@@ -253,7 +257,6 @@ func (c Character) Print() {
 	fmt.Printf("%s\n", c.GetName())
 	fmt.Printf(" - Gender: %s\n", c.Traits.Gender)
 	fmt.Printf(" - Nationality: %s\n", c.Traits.Nationality)
-	//fmt.Printf(" - Age: %d\n", c.Traits.Dob.Age)
 	fmt.Printf(" - Height: %s\n", c.Traits.Height)
 	fmt.Printf(" - Weight: %s\n", c.Traits.Weight)
 	fmt.Printf(" - Eye Color: %s\n", c.Traits.EyeColor)
@@ -275,37 +278,30 @@ func (c Character) GetPreferredLoot() []gameobjects.LootType {
 }
 
 func (c Character) HasTarget() bool {
-	return c.Role.target != nil
+	return c.target != nil
 }
 
 func (c *Character) GetTarget() *gameobjects.Location {
-	return c.Role.target
+	return c.target
 }
 
 func (c *Character) SetTarget(loc *gameobjects.Location) {
-	c.Role.target = loc
+	c.target = loc
 }
 
-func (c *Character) FindTarget(gs GameStateI) {
-
-	targets := gs.GetLocationsByType(c.Role.targetLocations)
-	targets = c.Behavior.FilterLocations(targets)
-	if len(targets) == 0 {
-		targets = gs.GetLocationsByLootType(c.Role.preferredLoot)
-	}
-	target := targets[rand.IntN(len(targets))]
-	c.SetTarget(&target)
+func findTarget(locations []gameobjects.Location) *gameobjects.Location {
+	return &locations[rand.IntN(len(locations))]
 }
 
-func (c Character) GetPossessions() map[gameobjects.LootType]gameobjects.Loot {
+func (c Character) GetItems() gameobjects.Inventory {
 	return c.possessions
 }
 
-func (c *Character) AddPossessions(lootType gameobjects.LootType, amount int, isStolen bool) {
+func (c *Character) AddItems(lootType gameobjects.LootType, amount int, isStolen bool) {
 	c.updatePossessions(lootType, amount, isStolen)
 }
 
-func (c *Character) RemovePossessions(lootType gameobjects.LootType, amount int, isStolen bool) {
+func (c *Character) RemoveItems(lootType gameobjects.LootType, amount int, isStolen bool) {
 	c.updatePossessions(lootType, amount, isStolen)
 }
 
@@ -338,17 +334,11 @@ func (c *Character) selectAction(gs GameStateI) Action {
 	// If it's time to take action
 	if gs.GetTimeOfDay() == c.Role.ActiveDuring {
 		// If they have a target
-		if c.Role.target != nil {
+		if c.target != nil {
 			return c.Role.RoleAction
 		}
 		// Find a target and perform recon
-		targets := gs.GetLocationsByType(c.Role.targetLocations)
-		targets = c.Behavior.FilterLocations(targets)
-		if len(targets) == 0 {
-			targets = gs.GetLocationsByLootType(c.Role.preferredLoot)
-		}
-		target := targets[rand.IntN(len(targets))]
-		c.Role.target = &target
+		c.target = c.FindTarget(gs.GetLocations())
 		return CreateReconAction()
 	}
 	// Not doing anything else, so rest
@@ -359,7 +349,9 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 
 	eyeColor := EyeColors[rand.IntN(len(EyeColors))]
 	hairColor := HairColors[rand.IntN(len(HairColors))]
-	return Character{
+	role := RegularRoles[rand.IntN(len(RegularRoles))]
+	behavior := RegularBehaviors[rand.IntN(len(RegularBehaviors))]
+	c := Character{
 		name: name{
 			first: apiChar.Name.First,
 			last:  apiChar.Name.Last,
@@ -378,10 +370,13 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],
 			HairLength:  HairLengths[rand.IntN(len(HairLengths))],
 		},
-		Role:        RegularRoles[rand.IntN(len(RegularRoles))],
-		Behavior:    RegularBehaviors[rand.IntN(len(RegularBehaviors))],
+		Role:        role,
+		Behavior:    behavior,
 		possessions: make(map[gameobjects.LootType]gameobjects.Loot),
 	}
+	// A little kludgy, but it does allow me to wrap the method in one place
+	c.FindTarget = behavior.FindTarget(role.FindTarget(findTarget))
+	return c
 }
 
 // Avg Male weight: 200lb
@@ -443,6 +438,7 @@ var clueItems = []clue{
 
 func (c Character) CreateClue() string {
 	clueItem := clueItems[rand.IntN(len(clueItems))]
+	// TODO: One time this hit the default case (which shouldn't be possible)
 	fmt.Printf("Clue type: %d\n", clueItem)
 	switch clueItem {
 	case clueGender:

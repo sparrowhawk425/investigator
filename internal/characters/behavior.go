@@ -7,6 +7,7 @@ import (
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
+// TODO: Decorators on actions?
 type Behavior struct {
 	Name               string
 	Desc               string
@@ -14,25 +15,27 @@ type Behavior struct {
 	LocationPreference []gameobjects.LocationType
 }
 
-func (b Behavior) FilterLocations(locations []gameobjects.Location) []gameobjects.Location {
-	targets := locations
-	if len(b.QualityPreference) > 0 {
-		qualMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
-			return slices.Contains(b.QualityPreference, loc.GetQuality())
-		})
-		if len(qualMatches) > 0 {
-			targets = qualMatches
+func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
+	return func(locations []gameobjects.Location) *gameobjects.Location {
+		targets := locations
+		if len(b.QualityPreference) > 0 {
+			qualMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
+				return slices.Contains(b.QualityPreference, loc.GetQuality())
+			})
+			if len(qualMatches) > 0 {
+				targets = qualMatches
+			}
 		}
-	}
-	if len(b.LocationPreference) > 0 {
-		locMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
-			return slices.Contains(b.LocationPreference, loc.Type)
-		})
-		if len(locMatches) > 0 {
-			targets = locMatches
+		if len(b.LocationPreference) > 0 {
+			locMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
+				return slices.Contains(b.LocationPreference, loc.Type)
+			})
+			if len(locMatches) > 0 {
+				targets = locMatches
+			}
 		}
+		return findTarget(targets)
 	}
-	return targets
 }
 
 func CreateFrugal() Behavior {

@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"slices"
 
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
@@ -182,21 +181,8 @@ func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {
 	}
 	idx := gamelogic.MenuSelect(gs.Scanner, "Who do you want to arrest?", lo.Map(gs.Player.CurrentLocation.Visitors, func(c gameobjects.Person, _ int) string { return c.GetName() }))
 	target := gs.Player.CurrentLocation.Visitors[idx].(characters.Character)
-	fmt.Printf("Arresting %s...\n", target.GetName())
-	characterMatchFunc := func(c characters.Character) bool { return c.GetName() == target.GetName() }
-	if slices.ContainsFunc(gs.Criminals, characterMatchFunc) {
-		fmt.Println("You have successfully identified and arrested a member of the Syndicate. Well done.")
-		gs.Criminals = slices.DeleteFunc(gs.Criminals, characterMatchFunc)
-		if len(gs.Criminals) == 0 {
-			fmt.Println("There are no more Sydicate members nearby")
-		} else if len(gs.Criminals) == 1 {
-			fmt.Println("There is still 1 more Syndicate member in the area")
-		} else {
-			fmt.Printf("There are %d more Syndicate members in the area\n", len(gs.Criminals))
-		}
-	} else {
-		fmt.Printf("Unfortunately, %s is not a member of the Syndicate\n", target.GetName())
-	}
+	gs.ArrestCriminal(target)
+
 	return true, nil
 }
 

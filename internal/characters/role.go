@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
@@ -15,7 +16,6 @@ type Role struct {
 	Solitary        bool
 	Freelancer      bool
 
-	target     *gameobjects.Location
 	RoleAction Action
 	RestAction Action
 }
@@ -26,6 +26,16 @@ var RegularRoles = []Role{
 
 var CriminalRoles = []Role{
 	CreateBurglar(), CreateRobber(), CreateVandal(), CreateFence(),
+}
+
+func (r Role) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
+	return func(locations []gameobjects.Location) *gameobjects.Location {
+		targets := functions.Filter(locations, gameobjects.FilterLocationsByType(r.targetLocations))
+		if len(targets) == 0 {
+			targets = functions.Filter(locations, gameobjects.FilterLocationsByLootType(r.preferredLoot))
+		}
+		return findTarget(targets)
+	}
 }
 
 func CreateDayGuard() Role {

@@ -99,10 +99,10 @@ type Location struct {
 	IsOccupied bool
 	Visitors   []Person
 
-	quality Quality
-	money   int
-	loot    map[LootType]Loot
-	clues   []string
+	quality   Quality
+	money     int
+	inventory Inventory
+	clues     []string
 }
 
 func (loc Location) Equals(other Location) bool {
@@ -137,7 +137,7 @@ func (loc Location) Print() {
 		fmt.Println("Notable Loot: None")
 	} else {
 		fmt.Println("Notable Loot:")
-		for _, loot := range loc.loot {
+		for _, loot := range loc.inventory {
 			if loot.Quantity > 0 {
 				fmt.Printf(" - %d %s\n", loot.Quantity, loot.Type)
 			}
@@ -173,7 +173,7 @@ func (loc Location) GetQualityStr() string {
 
 func (loc Location) GetAvailableLoot() []LootType {
 	available := []LootType{}
-	for _, loot := range loc.loot {
+	for _, loot := range loc.inventory {
 		if loot.Quantity > 0 {
 			available = append(available, loot.Type)
 		}
@@ -182,7 +182,7 @@ func (loc Location) GetAvailableLoot() []LootType {
 }
 
 func (loc Location) GetLootAmount(lootType LootType) int {
-	for _, availableLoot := range loc.loot {
+	for _, availableLoot := range loc.inventory {
 		if availableLoot.Type == lootType {
 			return availableLoot.Quantity
 		}
@@ -190,23 +190,26 @@ func (loc Location) GetLootAmount(lootType LootType) int {
 	return 0
 }
 
-func (loc *Location) AddLoot(lootType LootType, amount int) {
+func (loc Location) GetItems() Inventory {
+	return loc.inventory
+}
+
+func (loc *Location) AddItems(lootType LootType, amount int, _ bool) {
 	loc.UpdateLoot(lootType, amount)
 }
 
-func (loc *Location) GiveLoot(lootType LootType, amount int) Loot {
+func (loc *Location) RemoveItems(lootType LootType, amount int, _ bool) {
 	loc.UpdateLoot(lootType, -1*amount)
-	return Loot{Type: lootType, Quantity: amount, Value: lootType.GetValue()}
 }
 
 func (loc *Location) UpdateLoot(lootType LootType, amount int) {
-	loot, ok := loc.loot[lootType]
+	loot, ok := loc.inventory[lootType]
 	if !ok {
-		loc.loot[lootType] = Loot{Type: lootType, Value: lootType.GetValue()}
-		loot = loc.loot[lootType]
+		loc.inventory[lootType] = Loot{Type: lootType, Value: lootType.GetValue()}
+		loot = loc.inventory[lootType]
 	}
 	loot.Quantity += amount
-	loc.loot[lootType] = loot
+	loc.inventory[lootType] = loot
 }
 
 func (loc *Location) AddClue(clue string) {
@@ -292,7 +295,7 @@ func CreateLocation(fromLoc nameapi.Location, locType LocationType, isOccupied b
 		PostCode:   parsePostCode(fromLoc.Postcode),
 		IsOccupied: isOccupied,
 		quality:    qual,
-		loot:       availableLoot,
+		inventory:  availableLoot,
 	}
 }
 

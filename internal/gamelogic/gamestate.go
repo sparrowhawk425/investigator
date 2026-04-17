@@ -24,6 +24,8 @@ type GameState struct {
 	Places    []gameobjects.Location
 	People    []characters.Character
 	Criminals []characters.Character
+	Escaped   []characters.Character
+	Caught    []characters.Character
 	Crimes    []Crime
 }
 
@@ -62,7 +64,7 @@ func (gs *GameState) BuildGame() {
 
 	// Set Work Targets
 	for i := range gs.People {
-		gs.People[i].FindTarget(gs)
+		gs.People[i].SetTarget(gs.People[i].FindTarget(gs.Places))
 	}
 
 	cIdxs := []int{}
@@ -77,19 +79,23 @@ func (gs *GameState) BuildGame() {
 	}
 }
 
+func (gs GameState) GetLocations() []gameobjects.Location {
+	return gs.Places
+}
+
 func (gs GameState) GetLocationsByType(locTypes []gameobjects.LocationType) []gameobjects.Location {
 	filters := []func(gameobjects.Location, int) bool{}
 	filters = append(filters, gameobjects.FilterLocationsByType(locTypes))
-	return gs.GetLocations(filters)
+	return gs.GetFilteredLocations(filters)
 }
 
 func (gs GameState) GetLocationsByLootType(lootTypes []gameobjects.LootType) []gameobjects.Location {
 	filters := []func(gameobjects.Location, int) bool{}
 	filters = append(filters, gameobjects.FilterLocationsByLootType(lootTypes))
-	return gs.GetLocations(filters)
+	return gs.GetFilteredLocations(filters)
 }
 
-func (gs GameState) GetLocations(filters []func(gameobjects.Location, int) bool) []gameobjects.Location {
+func (gs GameState) GetFilteredLocations(filters []func(gameobjects.Location, int) bool) []gameobjects.Location {
 	locations := gs.Places
 	for _, filter := range filters {
 		locations = lo.Filter(locations, filter)
@@ -126,6 +132,31 @@ func (gs *GameState) CreateCrime(location gameobjects.Location, name string, loo
 	})
 }
 
+func (gs *GameState) TransferItems(lootType gameobjects.LootType, amount int, isStolen bool, src gameobjects.ItemHolder, dest gameobjects.ItemHolder) {
+	src.RemoveItems(lootType, amount, isStolen)
+	dest.AddItems(lootType, amount, isStolen)
+}
+
+func (gs *GameState) ArrestCriminal(target characters.Character) {
+
+	fmt.Printf("Arresting %s...\n", target.GetName())
+	characterMatchFunc := func(c characters.Character) bool { return c.GetName() == target.GetName() }
+	if slices.ContainsFunc(gs.Criminals, characterMatchFunc) {
+		fmt.Println("You have successfully identified and arrested a member of the Syndicate. Well done.")
+		gs.People = slices.DeleteFunc(gs.People, characterMatchFunc)
+		gs.Criminals = slices.DeleteFunc(gs.Criminals, characterMatchFunc)
+		if len(gs.Criminals) == 0 {
+			fmt.Println("There are no more Sydicate members nearby")
+		} else if len(gs.Criminals) == 1 {
+			fmt.Println("There is still 1 more Syndicate member in the area")
+		} else {
+			fmt.Printf("There are %d more Syndicate members in the area\n", len(gs.Criminals))
+		}
+	} else {
+		fmt.Printf("Unfortunately, %s is not a member of the Syndicate\n", target.GetName())
+	}
+}
+
 func (gs *GameState) Update() {
 
 	// Reset location visitors
@@ -140,6 +171,7 @@ func (gs *GameState) Update() {
 		// 	os.Exit(0)
 		// }
 	}
+	// TODO: This seems to be stale if it's not changed
 	if gs.Player.CurrentLocation != nil {
 		fmt.Printf("%s is currently at:\n", gs.Player.Name)
 		gs.Player.CurrentLocation.Print()

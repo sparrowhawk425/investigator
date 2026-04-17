@@ -1,5 +1,13 @@
 package gameobjects
 
+type Inventory map[LootType]Loot
+
+type ItemHolder interface {
+	GetItems() Inventory
+	AddItems(LootType, int, bool)
+	RemoveItems(LootType, int, bool)
+}
+
 type LootType string
 
 const (
@@ -39,6 +47,7 @@ func (lt LootType) GetValue() int {
 	}
 }
 
+// TODO: Tracking loot by quantity and is stolen bool means they can get confused if they intermix. They are treated as all stolen or all not stolen, regardless of what they started as
 type Loot struct {
 	Type     LootType
 	Quantity int
