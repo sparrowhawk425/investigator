@@ -25,7 +25,7 @@ var RegularRoles = []Role{
 }
 
 var CriminalRoles = []Role{
-	CreateBurglar(), CreateRobber(), CreateVandal(), CreateFence(),
+	CreateBurglar(), CreateRobber(),
 }
 
 func (r Role) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
@@ -166,24 +166,7 @@ func CreateVandal() Role {
 	}
 }
 
-func CreateFence() Role {
-	return Role{
-		Name:         "Fence",
-		ActiveDuring: times.Afternoon,
-		SleepDuring:  times.Night,
-		targetLocations: []gameobjects.LocationType{
-			gameobjects.Store, gameobjects.PawnShop,
-		},
-		preferredLoot: []gameobjects.LootType{
-			gameobjects.Jewelry, gameobjects.Art, gameobjects.Cars, gameobjects.Electronics,
-		},
-		Solitary:   true,
-		Freelancer: true,
-		RoleAction: CreateFenceAction(),
-		RestAction: CreateLieLowAction(),
-	}
-}
-
+// Fence
 // Hacker
 // Bruiser
 // Hitman

@@ -1,13 +1,13 @@
 package characters
 
 import (
+	"math/rand/v2"
 	"slices"
 
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
-// TODO: Decorators on actions?
 type Behavior struct {
 	Name               string
 	Desc               string
@@ -18,7 +18,8 @@ type Behavior struct {
 func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
 	return func(locations []gameobjects.Location) *gameobjects.Location {
 		targets := locations
-		if len(b.QualityPreference) > 0 {
+		prefChance := rand.IntN(100)
+		if prefChance > 40 && len(b.QualityPreference) > 0 {
 			qualMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
 				return slices.Contains(b.QualityPreference, loc.GetQuality())
 			})
@@ -26,13 +27,18 @@ func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobject
 				targets = qualMatches
 			}
 		}
-		if len(b.LocationPreference) > 0 {
+		prefChance = rand.IntN(100)
+		if prefChance > 40 && len(b.LocationPreference) > 0 {
 			locMatches := functions.Filter(targets, func(loc gameobjects.Location, i int) bool {
 				return slices.Contains(b.LocationPreference, loc.Type)
 			})
 			if len(locMatches) > 0 {
 				targets = locMatches
 			}
+		}
+		// If we somehow end up with no matches, return original list
+		if len(targets) == 0 {
+			targets = locations
 		}
 		return findTarget(targets)
 	}
@@ -61,6 +67,9 @@ func CreateGambler() Behavior {
 		LocationPreference: []gameobjects.LocationType{gameobjects.Casino},
 	}
 }
+
+// Cautious - lower risk chances and performs additional recon
+// Reckless - higher risk chances and performs less recon
 
 var RegularBehaviors = []Behavior{
 	CreateFrugal(), CreateProfligate(), CreateGambler(),

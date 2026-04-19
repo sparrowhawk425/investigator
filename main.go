@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/sparrowhawk425/investigators/internal/commands"
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
@@ -22,7 +23,8 @@ func main() {
 	scanner.Scan()
 	name := scanner.Text()
 	gameState.Player.Name = name
-	fmt.Printf("Welcome to International Investigators, %s!\n", name)
+	boldGreen := color.New(color.FgGreen, color.Bold)
+	boldGreen.Printf("Welcome to International Investigators, %s!\n", name)
 	fmt.Println("We believe members of the Syndicate have spread all across the world and we need your help to track them down.")
 
 	// Build the game
@@ -33,9 +35,18 @@ func main() {
 	commands := commands.GetCommandMap()
 	var err error
 	for {
+		// TODO: Expand to move to another region, chasing bosses
 		if len(gameState.Criminals) == 0 {
-			fmt.Println("Congratulations! You have caught all the Synidcate members in the area!")
-			fmt.Println("You Win!") // TODO: Expand to move to another region, chasing bosses
+			if len(gameState.Escaped) == 0 {
+				color.Green("Congratulations! You have caught all the Synidcate members in the area!")
+				color.Green("You Win!")
+			} else if len(gameState.Caught) == 0 {
+				color.Red("All the Syndicate members have escaped!")
+				color.Red("You lose!")
+			} else {
+				color.Yellow("You caught %d Syndicate members and %d escaped!", len(gameState.Caught), len(gameState.Escaped))
+				color.Yellow("Try again!")
+			}
 			return
 		}
 		gameState.PrintDay()
@@ -49,7 +60,6 @@ func main() {
 		update := false
 		cmd, exists := commands[cleanText[0]]
 		if exists {
-			// TODO: Currently character locations are off-by-one time (only added on update, so won't appear during visit, but will appear one time after)
 			update, err = cmd.Callback(&gameState, cleanText[1:])
 			if err != nil {
 				fmt.Printf("%v\n", err)

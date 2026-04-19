@@ -29,10 +29,11 @@ const (
 	Restaurant LocationType = "Restaurant"
 	Casino     LocationType = "Casino"
 	PawnShop   LocationType = "Pawn Shop"
+	Fence      LocationType = "Fence"
 )
 
 var LocationTypes = []LocationType{
-	Residence, Hotel, Store, Bank, Museum, Business, Restaurant, Casino, PawnShop,
+	Residence, Hotel, Store, Bank, Museum, Business, Restaurant, Casino, PawnShop, Fence,
 }
 
 var RecreationLocations = []LocationType{
@@ -147,7 +148,7 @@ func (loc Location) Print() {
 		fmt.Println("Notable Loot:")
 		for _, loot := range loc.inventory {
 			if loot.Quantity > 0 {
-				fmt.Printf(" - %d %s\n", loot.Quantity, loot.Type)
+				fmt.Printf(" - %s\n", loot.Type)
 			}
 		}
 	}
@@ -224,11 +225,11 @@ func (loc Location) GetItems() Inventory {
 	return loc.inventory
 }
 
-func (loc *Location) AddItems(lootType LootType, amount int, _ bool) {
+func (loc *Location) AddItems(lootType LootType, amount int) {
 	loc.UpdateLoot(lootType, amount)
 }
 
-func (loc *Location) RemoveItems(lootType LootType, amount int, _ bool) {
+func (loc *Location) RemoveItems(lootType LootType, amount int) {
 	loc.UpdateLoot(lootType, -1*amount)
 }
 
@@ -243,7 +244,6 @@ func (loc *Location) UpdateLoot(lootType LootType, amount int) {
 }
 
 func (loc *Location) AddClue(clue string) {
-	fmt.Printf("Adding %s clue to %d %s\n", clue, loc.Address.Number, loc.Address.Name)
 	loc.clues = append(loc.clues, clue)
 }
 
@@ -336,19 +336,6 @@ func CreateRandomLocations(apiLocations []nameapi.Location) []Location {
 		occupiedPct := rand.IntN(100)
 		locations[i] = CreateLocation(apiLoc, locType, occupiedPct > 5)
 	}
-	slices.SortFunc(locations, func(l1, l2 Location) int {
-		if l1.Address.Number < l2.Address.Number {
-			return -1
-		} else if l1.Address.Number > l2.Address.Number {
-			return 1
-		}
-		if l1.Address.Name < l2.Address.Name {
-			return -1
-		} else if l1.Address.Name > l2.Address.Name {
-			return 1
-		}
-		return 0
-	})
 	return locations
 }
 

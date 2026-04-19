@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/functions"
@@ -14,8 +15,8 @@ import (
 
 func GetDossierCommandMap() map[string]cliCommand {
 	commandMap := map[string]cliCommand{
-		"exit": {
-			name:         "exit",
+		"close": {
+			name:         "close",
 			description:  "Exit Dossier menu",
 			advancesTime: false,
 			Callback:     commandDossierExit,
@@ -60,13 +61,17 @@ func commandDossiers(gs *gamelogic.GameState, _ []string) (bool, error) {
 		fmt.Println(" None")
 	} else {
 		fmt.Printf(" %d Active\n", len(gs.Player.Dossiers))
+		for _, d := range gs.Player.Dossiers {
+			fmt.Printf(" - %s\n", d.Name)
+		}
 	}
 	commands := GetDossierCommandMap()
 	scanner := gs.Scanner
 
+	green := color.New(color.FgGreen).SprintFunc()
 	for {
 		// Get player input
-		fmt.Print("Dossiers: What do you wish to do? > ")
+		fmt.Printf("%s What do you wish to do? > ", green("Dossiers:"))
 		scanner.Scan()
 		cleanText := functions.CleanInput(scanner.Text())
 		cmd, exists := commands[cleanText[0]]
@@ -274,6 +279,15 @@ var characterMenuItems = []characterMenu{
 	cName, cGender, cNationality, cHeight, cWeight, cEyeColor, cHairColor, cHairLength, cShoeSize, cDone,
 }
 
+var clueGenders = append(characters.Genders, characters.UnknownGender)
+var clueNationalities = append(characters.Nationalities, characters.UnknownNationality)
+var clueHeights = append(characters.Heights, characters.UnknownHeight)
+var clueWeights = append(characters.Weights, characters.UnknownWeight)
+var clueEyeColors = append(characters.EyeColors, characters.UnknownEyes)
+var clueHairColors = append(characters.HairColors, characters.UnknownHairColor)
+var clueHairLengths = append(characters.HairLengths, characters.UnknownHairLength)
+var clueShoeSizes = append(characters.ShoeSizes, characters.UnknownShoe)
+
 func updateCharacter(scanner *bufio.Scanner, dossier *characters.Dossier) {
 
 	isDone := false
@@ -289,29 +303,29 @@ func updateCharacter(scanner *bufio.Scanner, dossier *characters.Dossier) {
 			scanner.Scan()
 			dossier.Target.SetLastName(scanner.Text())
 		case cGender:
-			idx = gamelogic.MenuSelect(scanner, "Gender:", lo.Map(characters.Genders, func(g characters.Gender, _ int) string { return g.String() }))
-			dossier.Target.Traits.Gender = characters.Genders[idx]
+			idx = gamelogic.MenuSelect(scanner, "Gender:", lo.Map(clueGenders, func(g characters.Gender, _ int) string { return g.String() }))
+			dossier.Target.Traits.Gender = clueGenders[idx]
 		case cNationality:
-			idx = gamelogic.MenuSelect(scanner, "Nationality:", lo.Map(characters.Nationalities, func(n characters.Nationality, _ int) string { return n.String() }))
-			dossier.Target.Traits.Nationality = characters.Nationalities[idx]
+			idx = gamelogic.MenuSelect(scanner, "Nationality:", lo.Map(clueNationalities, func(n characters.Nationality, _ int) string { return n.String() }))
+			dossier.Target.Traits.Nationality = clueNationalities[idx]
 		case cHeight:
-			idx = gamelogic.MenuSelect(scanner, "Height:", lo.Map(characters.Heights, func(h characters.Height, _ int) string { return h.String() }))
-			dossier.Target.Traits.Height = characters.Heights[idx]
+			idx = gamelogic.MenuSelect(scanner, "Height:", lo.Map(clueHeights, func(h characters.Height, _ int) string { return h.String() }))
+			dossier.Target.Traits.Height = clueHeights[idx]
 		case cWeight:
-			idx = gamelogic.MenuSelect(scanner, "Weight:", lo.Map(characters.Weights, func(w characters.Weight, _ int) string { return w.String() }))
-			dossier.Target.Traits.Weight = characters.Weights[idx]
+			idx = gamelogic.MenuSelect(scanner, "Weight:", lo.Map(clueWeights, func(w characters.Weight, _ int) string { return w.String() }))
+			dossier.Target.Traits.Weight = clueWeights[idx]
 		case cEyeColor:
-			idx = gamelogic.MenuSelect(scanner, "Eye Color:", lo.Map(characters.EyeColors, func(ec characters.EyeColor, _ int) string { return ec.String() }))
-			dossier.Target.Traits.EyeColor = characters.EyeColors[idx]
+			idx = gamelogic.MenuSelect(scanner, "Eye Color:", lo.Map(clueEyeColors, func(ec characters.EyeColor, _ int) string { return ec.String() }))
+			dossier.Target.Traits.EyeColor = clueEyeColors[idx]
 		case cHairColor:
-			idx = gamelogic.MenuSelect(scanner, "Hair Color:", lo.Map(characters.HairColors, func(hc characters.HairColor, _ int) string { return hc.String() }))
-			dossier.Target.Traits.HairColor = characters.HairColors[idx]
+			idx = gamelogic.MenuSelect(scanner, "Hair Color:", lo.Map(clueHairColors, func(hc characters.HairColor, _ int) string { return hc.String() }))
+			dossier.Target.Traits.HairColor = clueHairColors[idx]
 		case cHairLength:
-			idx = gamelogic.MenuSelect(scanner, "Hair Length:", lo.Map(characters.HairLengths, func(hl characters.HairLength, _ int) string { return hl.String() }))
-			dossier.Target.Traits.HairLength = characters.HairLengths[idx]
+			idx = gamelogic.MenuSelect(scanner, "Hair Length:", lo.Map(clueHairLengths, func(hl characters.HairLength, _ int) string { return hl.String() }))
+			dossier.Target.Traits.HairLength = clueHairLengths[idx]
 		case cShoeSize:
-			idx = gamelogic.MenuSelect(scanner, "Shoe Size:", lo.Map(characters.ShoeSizes, func(ss characters.ShoeSize, _ int) string { return ss.String() }))
-			dossier.Target.Traits.ShoeSize = characters.ShoeSizes[idx]
+			idx = gamelogic.MenuSelect(scanner, "Shoe Size:", lo.Map(clueShoeSizes, func(ss characters.ShoeSize, _ int) string { return ss.String() }))
+			dossier.Target.Traits.ShoeSize = clueShoeSizes[idx]
 		case cDone:
 			isDone = true
 		}

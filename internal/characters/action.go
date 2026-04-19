@@ -1,8 +1,6 @@
 package characters
 
 import (
-	"fmt"
-	"log"
 	"math/rand/v2"
 
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
@@ -19,8 +17,8 @@ type GameStateI interface {
 	AddCharacterToLocation(location gameobjects.Location, character Character)
 	CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot)
 	CreateClue(location gameobjects.Location, clue string)
-	TransferItems(lootType gameobjects.LootType, amount int, isStolen bool, src gameobjects.ItemHolder, dest gameobjects.ItemHolder)
-	RemoveCriminal(msg string, person Character)
+	TransferItems(lootType gameobjects.LootType, amount int, src gameobjects.ItemHolder, dest gameobjects.ItemHolder)
+	SetCriminalEscaping(person Character)
 }
 
 // TODO: Refactor actions to be more modular? Having a create method and second internal action function seems redundant. The name doesn't actually do anything
@@ -28,16 +26,6 @@ type Action struct {
 	Name string
 	Risk int //percent
 	Act  func(GameStateI, *Character)
-}
-
-// Player Actions
-
-func CreateArrestAction() Action {
-	return Action{
-		Name: "Arresting",
-		Risk: 0,
-		Act:  ArrestAction,
-	}
 }
 
 func CreateSleepAction() Action {
@@ -111,7 +99,7 @@ func CreateLieLowAction() Action {
 func CreateReconAction() Action {
 	return Action{
 		Name: "Performing Recon",
-		Risk: 20,
+		Risk: 15,
 		Act:  ReconAction,
 	}
 }
@@ -119,7 +107,7 @@ func CreateReconAction() Action {
 func CreateBurgleAction() Action {
 	return Action{
 		Name: "Burglary",
-		Risk: 30,
+		Risk: 20,
 		Act:  BurgleAction,
 	}
 }
@@ -140,14 +128,6 @@ func CreateVandalizeAction() Action {
 	}
 }
 
-func CreateFenceAction() Action {
-	return Action{
-		Name: "Fencing",
-		Risk: 15,
-		Act:  FenceAction,
-	}
-}
-
 func CreateEscapeAction() Action {
 	return Action{
 		Name: "Escaping",
@@ -158,75 +138,78 @@ func CreateEscapeAction() Action {
 
 // Perform Actions
 
-func ArrestAction(gs GameStateI, person *Character) {
-
-}
-
 func SleepAction(gs GameStateI, person *Character) {
-	fmt.Println("Sleeping...")
 	gs.AddCharacterToLocation(person.Address, *person)
 }
 
 func RestAction(gs GameStateI, person *Character) {
-	fmt.Println("Resting...")
 	gs.AddCharacterToLocation(person.Address, *person)
 }
 
 func GuardAction(gs GameStateI, person *Character) {
-	fmt.Println("Guarding...")
 	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 
 	if gs.GetDayOfTheWeek() == times.Monday {
-		person.AddItems(gameobjects.Money, 15, false)
+		person.AddItems(gameobjects.Money, 15)
 	}
-
 }
 
 func BankingAction(gs GameStateI, person *Character) {
-	fmt.Println("Banking...")
 	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 
 	if gs.GetDayOfTheWeek() == times.Monday {
-		person.AddItems(gameobjects.Money, 25, false)
+		person.AddItems(gameobjects.Money, 25)
 	}
 }
 
 func ManagingAction(gs GameStateI, person *Character) {
-	fmt.Println("Managing...")
 	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 
 	if gs.GetDayOfTheWeek() == times.Monday {
-		person.AddItems(gameobjects.Money, 50, false)
+		person.AddItems(gameobjects.Money, 50)
 	}
 }
 
 func VisitAction(gs GameStateI, person *Character) {
-	fmt.Println("Visiting...")
 	gs.AddCharacterToLocation(*person.GetIdleTarget(), *person)
 	price := person.GetIdleTarget().GetAdmissionPrice()
-	gs.TransferItems(gameobjects.Money, price, false, person, person.GetIdleTarget())
+	gs.TransferItems(gameobjects.Money, price, person, person.GetIdleTarget())
 }
 
 func SellingAction(gs GameStateI, person *Character) {
-	fmt.Println("Selling...")
-	// TODO: How to get the right target?
+
+	gs.AddCharacterToLocation(*person.GetIdleTarget(), *person)
+	money := person.GetIdleTarget().GetLootAmount(gameobjects.Money)
+	for lootType, loot := range person.GetItems() {
+		if lootType == gameobjects.Money {
+			continue
+		}
+		quantity := getLootAmount(money, loot.Quantity, loot.Value)
+		gs.TransferItems(lootType, loot.Quantity, person, person.GetIdleTarget())
+		value := quantity * loot.Value
+		gs.TransferItems(gameobjects.Money, value, person.GetIdleTarget(), person)
+		money -= value
+	}
+}
+
+func getLootAmount(max, quantity, value int) int {
+	for quantity*value > max {
+		quantity--
+	}
+	return quantity
 }
 
 // Criminal Actions
 
 func LieLowAction(gs GameStateI, person *Character) {
-	fmt.Println("Lying low...")
+	gs.AddCharacterToLocation(person.Address, *person)
 }
 
 func ReconAction(gs GameStateI, person *Character) {
-	fmt.Println("Performing recon...")
-
 	gs.AddCharacterToLocation(*person.GetTarget(), *person)
 }
 
 func BurgleAction(gs GameStateI, person *Character) {
-	log.Println("Burgling...")
-
 	takeLoot(gs, "Burglary", person)
 
 	// Enemy needs new target
@@ -234,28 +217,16 @@ func BurgleAction(gs GameStateI, person *Character) {
 }
 
 func RobAction(gs GameStateI, person *Character) {
-	fmt.Println("Robbing...")
-
 	takeLoot(gs, "Robbery", person)
 
 	person.SetTarget(nil)
 }
 
 func VandalizeAction(gs GameStateI, person *Character) {
-	fmt.Println("Vandalizing...")
-
-}
-
-func FenceAction(gs GameStateI, person *Character) {
-	fmt.Println("Fencing...")
-
-	gs.AddCharacterToLocation(person.Address, *person)
 }
 
 func EscapeAction(gs GameStateI, person *Character) {
-	fmt.Println("Escaping...")
-
-	gs.RemoveCriminal("A member of the Syndicate has left the area...", *person)
+	gs.SetCriminalEscaping(*person)
 }
 
 // Helpers
@@ -271,8 +242,8 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 		if maxLoot > 0 {
 			amt := rand.IntN(maxLoot + 1)
 			if amt > 0 {
-				gs.TransferItems(lootType, amt, true, person.GetTarget(), person)
-				stolenLoot = append(stolenLoot, gameobjects.Loot{Type: lootType, Quantity: amt, Value: lootType.GetValue(), IsStolen: true})
+				gs.TransferItems(lootType, amt, person.GetTarget(), person)
+				stolenLoot = append(stolenLoot, gameobjects.Loot{Type: lootType, Quantity: amt, Value: lootType.GetValue()})
 			}
 		}
 	}

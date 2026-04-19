@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
@@ -73,15 +74,15 @@ func GetCommandMap() map[string]cliCommand {
 		"arrest": {
 			name:         "arrest",
 			description:  "Arrest a person at your current location",
-			advancesTime: true,
+			advancesTime: false,
 			Callback:     commandArrestCharacter,
 		},
-		"talk": {
-			name:         "talk",
-			description:  "Converse with people at your current location",
-			advancesTime: false,
-			Callback:     commandConverse,
-		},
+		// "talk": {
+		// 	name:         "talk",
+		// 	description:  "Converse with people at your current location",
+		// 	advancesTime: false,
+		// 	Callback:     commandConverse,
+		// },
 		"enemies": {
 			name:         "enemies",
 			description:  "View info about enemies",
@@ -170,7 +171,6 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	return true, nil
 }
 
-// TODO: Currently this is off-by-one since NPC update hasn't happened yet.
 func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {
 
 	if gs.Player.CurrentLocation == nil {
@@ -184,12 +184,15 @@ func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {
 	idx := gamelogic.MenuSelect(gs.Scanner, "Who do you want to arrest?", lo.Map(gs.Player.CurrentLocation.Visitors, func(c gameobjects.Person, _ int) string { return c.GetName() }))
 	target := gs.Player.CurrentLocation.Visitors[idx].(characters.Character)
 	gs.ArrestCriminal(target)
-	return true, nil
+	return false, nil
 }
 
 func commandDebugEnemies(gs *gamelogic.GameState, _ []string) (bool, error) {
-	for _, c := range gs.Criminals {
+	for _, criminal := range gs.Criminals {
+		idx := slices.IndexFunc(gs.People, func(p characters.Character) bool { return criminal.GetName() == p.GetName() })
+		c := gs.People[idx]
 		c.Print()
+		fmt.Printf("Goal: %d/%d\n", c.Goal.Progress, c.Goal.Target)
 	}
 	return false, nil
 }

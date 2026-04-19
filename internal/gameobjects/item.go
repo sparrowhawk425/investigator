@@ -4,8 +4,8 @@ type Inventory map[LootType]Loot
 
 type ItemHolder interface {
 	GetItems() Inventory
-	AddItems(LootType, int, bool)
-	RemoveItems(LootType, int, bool)
+	AddItems(LootType, int)
+	RemoveItems(LootType, int)
 }
 
 type LootType string
@@ -35,7 +35,7 @@ func (lt LootType) GetValue() int {
 	case Jewelry:
 		return 10
 	case Money:
-		return 5
+		return 1
 	case Art:
 		return 20
 	case Electronics:
@@ -52,5 +52,5 @@ type Loot struct {
 	Type     LootType
 	Quantity int
 	Value    int
-	IsStolen bool
+	//IsStolen bool
 }

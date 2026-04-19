@@ -3,6 +3,7 @@ package characters
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"strings"
 	"time"
 
@@ -13,9 +14,10 @@ import (
 type Gender string
 
 const (
-	MaleGender    Gender = "Male"
-	FemaleGender  Gender = "Female"
-	UnknownGender Gender = "Unknown"
+	MaleGender      Gender = "Male"
+	FemaleGender    Gender = "Female"
+	NonbinaryGender Gender = "Nonbinary"
+	UnknownGender   Gender = "Unknown"
 )
 
 var Genders = []Gender{
@@ -200,6 +202,9 @@ type Goal struct {
 func (g *Goal) Update(loot gameobjects.Loot) {
 	if loot.Type == gameobjects.Money {
 		g.Progress += loot.Value * loot.Quantity
+		if g.Progress < 0 {
+			g.Progress = 0
+		}
 	}
 }
 
@@ -264,13 +269,8 @@ func (c Character) Print() {
 	fmt.Printf(" - Hair Color: %s\n", c.Traits.HairColor)
 	fmt.Printf(" - Hair Length: %s\n", c.Traits.HairLength)
 	fmt.Printf(" - Shoe Size: %s\n", c.Traits.ShoeSize)
+	fmt.Printf(" - Address: %d %s\n", c.Address.Address.Number, c.Address.Address.Name) // TODO: make it easier to track a criminal (Need to make it possible to find criminals elsewhere)
 
-	if len(c.possessions) > 0 {
-		fmt.Println("\nItems:")
-		for _, item := range c.possessions {
-			fmt.Printf("%d %s\n", item.Quantity, item.Type)
-		}
-	}
 	fmt.Println("")
 }
 
@@ -302,22 +302,21 @@ func (c Character) GetItems() gameobjects.Inventory {
 	return c.possessions
 }
 
-func (c *Character) AddItems(lootType gameobjects.LootType, amount int, isStolen bool) {
-	c.updatePossessions(lootType, amount, isStolen)
+func (c *Character) AddItems(lootType gameobjects.LootType, amount int) {
+	c.updatePossessions(lootType, amount)
 }
 
-func (c *Character) RemoveItems(lootType gameobjects.LootType, amount int, isStolen bool) {
-	c.updatePossessions(lootType, amount, isStolen)
+func (c *Character) RemoveItems(lootType gameobjects.LootType, amount int) {
+	c.updatePossessions(lootType, -amount)
 }
 
-func (c *Character) updatePossessions(lootType gameobjects.LootType, amount int, isStolen bool) {
+func (c *Character) updatePossessions(lootType gameobjects.LootType, amount int) {
 	loot, ok := c.possessions[lootType]
 	if !ok {
 		c.possessions[lootType] = gameobjects.Loot{Type: lootType, Value: lootType.GetValue()}
 		loot = c.possessions[lootType]
 	}
 	loot.Quantity += amount
-	loot.IsStolen = isStolen
 	c.possessions[lootType] = loot
 
 	c.Goal.Update(loot)
@@ -332,25 +331,35 @@ func (c *Character) PerformAction(gs GameStateI) {
 
 func (c *Character) selectAction(gs GameStateI) Action {
 
+	isCriminal := slices.ContainsFunc(CriminalRoles, func(r Role) bool { return c.Role.Name == r.Name })
+
 	// If it's time to sleep
 	if gs.GetTimeOfDay() == c.Role.SleepDuring {
 		return CreateSleepAction()
 	}
 	// If it's time to take action
 	if gs.GetTimeOfDay() == c.Role.ActiveDuring {
-		// If they have a target
-		if c.target != nil {
-			return c.Role.RoleAction
+		// If they are a Syndicate member and completed their goal, escape!
+		if isCriminal && c.Goal.IsComplete() {
+			return CreateEscapeAction()
 		}
-		// Find a target and perform recon
-		c.target = c.FindTarget(gs.GetLocations())
-		return CreateReconAction()
+		if c.target == nil {
+			// Find a target and perform recon
+			c.target = c.FindTarget(gs.GetLocations())
+			return CreateReconAction()
+		}
+		// If they have a target
+		return c.Role.RoleAction
 	}
 	// Spare time, so recreate, maybe
 	recreation := rand.IntN(100)
 	if recreation < 34 {
 		// Shop
-		c.idleTarget = c.FindTarget(gs.GetLocationsByType(gameobjects.ShopLocations))
+		shops := gameobjects.ShopLocations
+		if isCriminal {
+			shops = []gameobjects.LocationType{gameobjects.PawnShop, gameobjects.Fence}
+		}
+		c.idleTarget = c.FindTarget(gs.GetLocationsByType(shops))
 		return CreateSellingAction()
 	} else if recreation < 67 {
 		c.idleTarget = c.FindTarget(gs.GetLocationsByType(gameobjects.RecreationLocations))
@@ -360,12 +369,20 @@ func (c *Character) selectAction(gs GameStateI) Action {
 	return c.Role.RestAction
 }
 
-func CreateRandomCharacter(apiChar nameapi.Character) Character {
+func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 
+	goal := Goal{Target: 1500}
 	eyeColor := EyeColors[rand.IntN(len(EyeColors))]
 	hairColor := HairColors[rand.IntN(len(HairColors))]
-	role := RegularRoles[rand.IntN(len(RegularRoles))]
 	behavior := RegularBehaviors[rand.IntN(len(RegularBehaviors))]
+	gender := Gender(strings.ToUpper(apiChar.Gender[:1]) + strings.ToLower(apiChar.Gender[1:]))
+	if rand.IntN(100) > 94 {
+		gender = NonbinaryGender
+	}
+	resType := gameobjects.Residence
+	if rand.IntN(100) > 80 {
+		resType = gameobjects.Hotel
+	}
 	c := Character{
 		name: name{
 			first: apiChar.Name.First,
@@ -379,12 +396,14 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			Nationality: Nationality(apiChar.Nationality),
 			EyeColor:    eyeColor,
 			HairColor:   hairColor,
-			Gender:      Gender(strings.ToUpper(apiChar.Gender[:1]) + strings.ToLower(apiChar.Gender[1:])),
+			Gender:      gender,
 			Height:      getHeight(apiChar.Gender),
 			Weight:      getWeight(apiChar.Gender),
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],
 			HairLength:  HairLengths[rand.IntN(len(HairLengths))],
 		},
+		Address:     gameobjects.CreateLocation(apiChar.Location, resType, true),
+		Goal:        goal,
 		Role:        role,
 		Behavior:    behavior,
 		possessions: make(map[gameobjects.LootType]gameobjects.Loot),
@@ -453,14 +472,12 @@ var clueItems = []clue{
 
 func (c Character) CreateClue() string {
 	clueItem := clueItems[rand.IntN(len(clueItems))]
-	// TODO: One time this hit the default case (which shouldn't be possible)
-	fmt.Printf("Clue type: %d\n", clueItem)
 	switch clueItem {
 	case clueGender:
 		return fmt.Sprintf("A shot from a security camera clearly shows the figure is %s.", c.Traits.Gender)
 	case clueEyeColor:
 		return fmt.Sprintf("A security guard got a look at the figure's face and saw they had %s eyes.", c.Traits.EyeColor)
-	case clueHairColor | clueHairLength:
+	case clueHairColor, clueHairLength:
 		if c.Traits.HairLength == BaldHair {
 			return "A shot from a security camera shows the figure is bald"
 		} else {
@@ -482,6 +499,7 @@ func (c Character) CreateClue() string {
 	case clueShoeSize:
 		return fmt.Sprintf("A footprint recovered from the crime scene reveals the figure had %s shoes", c.Traits.ShoeSize)
 	default:
+		// Shouldn't get here
 		return "There's nothing to find"
 	}
 }
