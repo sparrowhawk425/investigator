@@ -26,13 +26,21 @@ const (
 	Bank       LocationType = "Bank"
 	Museum     LocationType = "Museum"
 	Business   LocationType = "Business"
+	Restaurant LocationType = "Restaurant"
 	Casino     LocationType = "Casino"
 	PawnShop   LocationType = "Pawn Shop"
-	Restaurant LocationType = "Restaurant"
 )
 
 var LocationTypes = []LocationType{
-	Residence, Hotel, Store, Bank, Museum, Business, Casino, PawnShop,
+	Residence, Hotel, Store, Bank, Museum, Business, Restaurant, Casino, PawnShop,
+}
+
+var RecreationLocations = []LocationType{
+	Hotel, Museum, Casino, Restaurant,
+}
+
+var ShopLocations = []LocationType{
+	Store, PawnShop,
 }
 
 func (LocationType) IsType() bool {
@@ -169,6 +177,28 @@ func (loc Location) GetQuality() Quality {
 
 func (loc Location) GetQualityStr() string {
 	return loc.quality.String()
+}
+
+func (loc Location) GetAdmissionPrice() int {
+	qual := 1
+	switch loc.quality {
+	case Moderate:
+		qual = 2
+	case Expensive:
+		qual = 3
+	}
+	price := 1
+	switch loc.Type {
+	case Restaurant:
+		price = 2
+	case Hotel:
+		price = 5
+	case Museum:
+		price = 10
+	case Casino:
+		price = 20
+	}
+	return price * qual
 }
 
 func (loc Location) GetAvailableLoot() []LootType {

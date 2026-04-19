@@ -164,13 +164,15 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	filterTypes := []gamelogic.FilterType{gameobjects.Residence, gameobjects.Cheap, gameobjects.Jewelry}
 
 	idx := gamelogic.CreateFilterableMenu(gs.Scanner, "Choose a location:", gs.Places, filterTypes)
-	loc := gs.Places[idx]
-	gs.Player.CurrentLocation = &loc
+
+	gs.Player.CurrentLocation = &gs.Places[idx]
 
 	return true, nil
 }
 
+// TODO: Currently this is off-by-one since NPC update hasn't happened yet.
 func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {
+
 	if gs.Player.CurrentLocation == nil {
 		fmt.Println("You aren't currently visiting any location")
 		return false, nil
@@ -182,7 +184,6 @@ func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {
 	idx := gamelogic.MenuSelect(gs.Scanner, "Who do you want to arrest?", lo.Map(gs.Player.CurrentLocation.Visitors, func(c gameobjects.Person, _ int) string { return c.GetName() }))
 	target := gs.Player.CurrentLocation.Visitors[idx].(characters.Character)
 	gs.ArrestCriminal(target)
-
 	return true, nil
 }
 

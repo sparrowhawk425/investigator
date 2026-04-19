@@ -15,6 +15,8 @@ type Dossier struct {
 }
 
 type Player struct {
+	Character
+
 	Name            string
 	CurrentLocation *gameobjects.Location
 	Dossiers        []Dossier
@@ -31,8 +33,8 @@ func (p *Player) CreateDossier(scanner *bufio.Scanner) *Dossier {
 	target := Character{
 		Traits: Characteristics{
 			Dob:         DateOfBirth{},
-			Nationality: unknown,
-			Gender:      unknown,
+			Nationality: UnknownNationality,
+			Gender:      UnknownGender,
 			Height:      UnknownHeight,
 			Weight:      UnknownWeight,
 			EyeColor:    UnknownEyes,

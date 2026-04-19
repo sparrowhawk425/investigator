@@ -3,6 +3,8 @@ package commands
 import (
 	"bufio"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
@@ -24,23 +26,29 @@ func GetDossierCommandMap() map[string]cliCommand {
 			advancesTime: false,
 			Callback:     commandDossierHelp,
 		},
-		"view": {
-			name:         "view",
-			description:  "Select a dossier to view in detail",
-			advancesTime: false,
-			Callback:     commandDossierView,
-		},
 		"create": {
 			name:         "create",
 			description:  "Create a new Dossier",
 			advancesTime: false,
 			Callback:     commandDossierCreate,
 		},
+		"view": {
+			name:         "view",
+			description:  "Select a dossier to view in detail. Optionally include the name of the dossier to match as an argument",
+			advancesTime: false,
+			Callback:     commandDossierView,
+		},
 		"update": {
 			name:         "update",
-			description:  "Update an existing Dossier",
+			description:  "Update an existing Dossier. Optionally include the name of the dossier to match as an argument",
 			advancesTime: false,
 			Callback:     commandDossierUpdate,
+		},
+		"match": {
+			name:         "match",
+			description:  "Get a list of matches for this Dossier. Optionally include the name of the dossier to match as an argument",
+			advancesTime: false,
+			Callback:     commandDossierMatch,
 		},
 	}
 	return commandMap
@@ -90,19 +98,6 @@ func commandDossierHelp(gs *gamelogic.GameState, _ []string) (bool, error) {
 	return false, nil
 }
 
-func commandDossierView(gs *gamelogic.GameState, _ []string) (bool, error) {
-
-	if len(gs.Player.Dossiers) == 0 {
-		fmt.Println("No Dossiers to view")
-		return false, nil
-	}
-	idx := gamelogic.MenuSelect(gs.Scanner, "Choose a Dossier:", lo.Map(gs.Player.Dossiers, func(d characters.Dossier, _ int) string { return d.Name }))
-	d := gs.Player.Dossiers[idx]
-	d.Print()
-
-	return false, nil
-}
-
 func commandDossierCreate(gs *gamelogic.GameState, _ []string) (bool, error) {
 	dossier := gs.Player.CreateDossier(gs.Scanner)
 	updateDossier(gs.Scanner, dossier)
@@ -110,16 +105,118 @@ func commandDossierCreate(gs *gamelogic.GameState, _ []string) (bool, error) {
 	return false, nil
 }
 
-func commandDossierUpdate(gs *gamelogic.GameState, _ []string) (bool, error) {
+func commandDossierView(gs *gamelogic.GameState, params []string) (bool, error) {
+
+	if len(gs.Player.Dossiers) == 0 {
+		fmt.Println("No Dossiers to view")
+		return false, nil
+	}
+	idx := getDossierIndex(gs, params)
+	d := gs.Player.Dossiers[idx]
+	d.Print()
+
+	return false, nil
+}
+
+func commandDossierUpdate(gs *gamelogic.GameState, params []string) (bool, error) {
 
 	if len(gs.Player.Dossiers) == 0 {
 		fmt.Println("No Dossiers to update")
 		return false, nil
 	}
-	idx := gamelogic.MenuSelect(gs.Scanner, "Choose a Dossier:", lo.Map(gs.Player.Dossiers, func(d characters.Dossier, _ int) string { return d.Name }))
-
+	idx := getDossierIndex(gs, params)
+	if idx == -1 {
+		fmt.Println("No dossier with that name exists")
+		return false, nil
+	}
 	updateDossier(gs.Scanner, &gs.Player.Dossiers[idx])
 
+	return false, nil
+}
+
+func commandDossierMatch(gs *gamelogic.GameState, params []string) (bool, error) {
+
+	idx := getDossierIndex(gs, params)
+	dossier := gs.Player.Dossiers[idx]
+	matches := []characters.Character{}
+	traits := dossier.Target.Traits
+	matchTraits := "Matching on: "
+	if traits.Gender != characters.UnknownGender {
+		matchTraits += fmt.Sprintf("Gender: %s, ", traits.Gender)
+	}
+	if traits.Nationality != characters.UnknownNationality {
+		matchTraits += fmt.Sprintf("From: %s, ", traits.Nationality)
+	}
+	if traits.EyeColor != characters.UnknownEyes {
+		matchTraits += fmt.Sprintf("Eyes: %s, ", traits.EyeColor)
+	}
+	if traits.HairColor != characters.UnknownHairColor {
+		matchTraits += fmt.Sprintf("Hair Color: %s, ", traits.HairColor)
+	}
+	if traits.HairLength != characters.UnknownHairLength {
+		matchTraits += fmt.Sprintf("Hair Length: %s, ", traits.HairLength)
+	}
+	if traits.Height != characters.UnknownHeight {
+		matchTraits += fmt.Sprintf("Height: %s, ", traits.Height)
+	}
+	if traits.Weight != characters.UnknownWeight {
+		matchTraits += fmt.Sprintf("Weight: %s, ", traits.Weight)
+	}
+	if traits.ShoeSize != characters.UnknownShoe {
+		matchTraits += fmt.Sprintf("Shoe Size: %s", traits.ShoeSize)
+	}
+	fmt.Println(matchTraits)
+	for _, c := range gs.People {
+		if traits.Gender != characters.UnknownGender {
+			if c.Traits.Gender != traits.Gender {
+				continue
+			}
+		}
+		if traits.Nationality != characters.UnknownNationality {
+			if c.Traits.Nationality != traits.Nationality {
+				continue
+			}
+		}
+		if traits.EyeColor != characters.UnknownEyes {
+			if c.Traits.EyeColor != traits.EyeColor {
+				continue
+			}
+		}
+		if traits.HairColor != characters.UnknownHairColor {
+			if c.Traits.HairColor != traits.HairColor {
+				continue
+			}
+		}
+		if traits.HairLength != characters.UnknownHairLength {
+			if c.Traits.HairLength != traits.HairLength {
+				continue
+			}
+		}
+		if traits.Height != characters.UnknownHeight {
+			if c.Traits.Height != traits.Height {
+				continue
+			}
+		}
+		if traits.Weight != characters.UnknownWeight {
+			if c.Traits.Weight != traits.Weight {
+				continue
+			}
+		}
+		if traits.ShoeSize != characters.UnknownShoe {
+			if c.Traits.ShoeSize != traits.ShoeSize {
+				continue
+			}
+		}
+		matches = append(matches, c)
+	}
+	if len(matches) == 0 {
+		fmt.Println("No matches found for this dossier")
+	} else {
+		fmt.Println("Matches:")
+		for _, match := range matches {
+			fmt.Printf(" - %s\n", match.GetName())
+		}
+	}
 	return false, nil
 }
 
@@ -219,4 +316,18 @@ func updateCharacter(scanner *bufio.Scanner, dossier *characters.Dossier) {
 			isDone = true
 		}
 	}
+}
+
+func getDossierIndex(gs *gamelogic.GameState, params []string) int {
+
+	idx := -1
+	if len(params) < 1 {
+		idx = gamelogic.MenuSelect(gs.Scanner, "Choose a Dossier:", lo.Map(gs.Player.Dossiers, func(d characters.Dossier, _ int) string { return d.Name }))
+	} else {
+		dossierName := params[0]
+		idx = slices.IndexFunc(gs.Player.Dossiers, func(d characters.Dossier) bool {
+			return strings.ToLower(d.Name) == dossierName
+		})
+	}
+	return idx
 }

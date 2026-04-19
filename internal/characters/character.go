@@ -13,9 +13,9 @@ import (
 type Gender string
 
 const (
-	MaleGender   Gender = "Male"
-	FemaleGender Gender = "Female"
-	UnkownGender Gender = "Unknown"
+	MaleGender    Gender = "Male"
+	FemaleGender  Gender = "Female"
+	UnknownGender Gender = "Unknown"
 )
 
 var Genders = []Gender{
@@ -224,6 +224,7 @@ type Character struct {
 	possessions gameobjects.Inventory
 
 	target     *gameobjects.Location
+	idleTarget *gameobjects.Location
 	FindTarget func([]gameobjects.Location) *gameobjects.Location
 }
 
@@ -293,6 +294,10 @@ func findTarget(locations []gameobjects.Location) *gameobjects.Location {
 	return &locations[rand.IntN(len(locations))]
 }
 
+func (c *Character) GetIdleTarget() *gameobjects.Location {
+	return c.idleTarget
+}
+
 func (c Character) GetItems() gameobjects.Inventory {
 	return c.possessions
 }
@@ -341,6 +346,16 @@ func (c *Character) selectAction(gs GameStateI) Action {
 		c.target = c.FindTarget(gs.GetLocations())
 		return CreateReconAction()
 	}
+	// Spare time, so recreate, maybe
+	recreation := rand.IntN(100)
+	if recreation < 34 {
+		// Shop
+		c.idleTarget = c.FindTarget(gs.GetLocationsByType(gameobjects.ShopLocations))
+		return CreateSellingAction()
+	} else if recreation < 67 {
+		c.idleTarget = c.FindTarget(gs.GetLocationsByType(gameobjects.RecreationLocations))
+		return CreateVisitingAction()
+	}
 	// Not doing anything else, so rest
 	return c.Role.RestAction
 }
@@ -364,7 +379,7 @@ func CreateRandomCharacter(apiChar nameapi.Character) Character {
 			Nationality: Nationality(apiChar.Nationality),
 			EyeColor:    eyeColor,
 			HairColor:   hairColor,
-			Gender:      Gender(apiChar.Gender),
+			Gender:      Gender(strings.ToUpper(apiChar.Gender[:1]) + strings.ToLower(apiChar.Gender[1:])),
 			Height:      getHeight(apiChar.Gender),
 			Weight:      getWeight(apiChar.Gender),
 			ShoeSize:    ShoeSizes[rand.IntN(len(ShoeSizes))],

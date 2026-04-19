@@ -37,6 +37,10 @@ func (gs GameState) GetTimeOfDay() times.TimeOfDay {
 	return gs.TimeOfDay
 }
 
+func (gs GameState) GetDayOfTheWeek() times.DayOfTheWeek {
+	return gs.WeekDay
+}
+
 func (gs *GameState) NextDay() {
 	gs.DayNumber++
 	gs.WeekDay = gs.WeekDay.NextDay()
@@ -137,23 +141,32 @@ func (gs *GameState) TransferItems(lootType gameobjects.LootType, amount int, is
 	dest.AddItems(lootType, amount, isStolen)
 }
 
+func (gs GameState) GetPlayer() characters.Player {
+	return gs.Player
+}
+
 func (gs *GameState) ArrestCriminal(target characters.Character) {
 
 	fmt.Printf("Arresting %s...\n", target.GetName())
 	characterMatchFunc := func(c characters.Character) bool { return c.GetName() == target.GetName() }
 	if slices.ContainsFunc(gs.Criminals, characterMatchFunc) {
-		fmt.Println("You have successfully identified and arrested a member of the Syndicate. Well done.")
-		gs.People = slices.DeleteFunc(gs.People, characterMatchFunc)
-		gs.Criminals = slices.DeleteFunc(gs.Criminals, characterMatchFunc)
-		if len(gs.Criminals) == 0 {
-			fmt.Println("There are no more Sydicate members nearby")
-		} else if len(gs.Criminals) == 1 {
-			fmt.Println("There is still 1 more Syndicate member in the area")
-		} else {
-			fmt.Printf("There are %d more Syndicate members in the area\n", len(gs.Criminals))
-		}
+		gs.RemoveCriminal("You have successfully identified and arrested a member of the Syndicate. Well done.", target)
 	} else {
 		fmt.Printf("Unfortunately, %s is not a member of the Syndicate\n", target.GetName())
+	}
+}
+
+func (gs *GameState) RemoveCriminal(msg string, person characters.Character) {
+	characterMatchFunc := func(c characters.Character) bool { return c.GetName() == person.GetName() }
+	fmt.Println(msg)
+	gs.People = slices.DeleteFunc(gs.People, characterMatchFunc)
+	gs.Criminals = slices.DeleteFunc(gs.Criminals, characterMatchFunc)
+	if len(gs.Criminals) == 0 {
+		fmt.Println("There are no more Sydicate members nearby")
+	} else if len(gs.Criminals) == 1 {
+		fmt.Println("There is still 1 more Syndicate member in the area")
+	} else {
+		fmt.Printf("There are %d more Syndicate members in the area\n", len(gs.Criminals))
 	}
 }
 
@@ -171,11 +184,16 @@ func (gs *GameState) Update() {
 		// 	os.Exit(0)
 		// }
 	}
-	// TODO: This seems to be stale if it's not changed
+
+	// TODO: Need better way to incorporate the player in the update loop
+	if gs.Player.Action != nil {
+		gs.Player.Action.Act(gs, &gs.Player.Character)
+	}
 	if gs.Player.CurrentLocation != nil {
 		fmt.Printf("%s is currently at:\n", gs.Player.Name)
 		gs.Player.CurrentLocation.Print()
 	}
+
 	for _, place := range gs.Places {
 		if len(place.Visitors) > 0 {
 			for _, visitor := range place.Visitors {
@@ -190,5 +208,8 @@ func (gs *GameState) Update() {
 	gs.TimeOfDay = times.TransitionTimeOfDay(gs.TimeOfDay)
 	if gs.TimeOfDay == times.Morning {
 		gs.NextDay()
+		if gs.GetDayOfTheWeek() == times.Monday {
+			// TODO: Add building loot
+		}
 	}
 }
