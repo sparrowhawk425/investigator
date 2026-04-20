@@ -83,12 +83,12 @@ func GetCommandMap() map[string]cliCommand {
 		// 	advancesTime: false,
 		// 	Callback:     commandConverse,
 		// },
-		"enemies": {
-			name:         "enemies",
-			description:  "View info about enemies",
-			advancesTime: false,
-			Callback:     commandDebugEnemies,
-		},
+		// "enemies": {
+		// 	name:         "enemies",
+		// 	description:  "View info about enemies",
+		// 	advancesTime: false,
+		// 	Callback:     commandDebugEnemies,
+		// },
 	}
 	return commandMap
 }
