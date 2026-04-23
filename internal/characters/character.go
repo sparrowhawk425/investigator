@@ -231,6 +231,14 @@ type Character struct {
 	target     *gameobjects.Location
 	idleTarget *gameobjects.Location
 	FindTarget func([]gameobjects.Location) *gameobjects.Location
+	GetRisk    func() int
+
+	reconCount    int
+	GetReconTimes func() int
+}
+
+func getReconTimes() int {
+	return 1
 }
 
 func (c Character) GetName() string {
@@ -294,6 +302,10 @@ func findTarget(locations []gameobjects.Location) *gameobjects.Location {
 	return &locations[rand.IntN(len(locations))]
 }
 
+func (c Character) getRisk() int {
+	return c.Role.RoleAction.Risk
+}
+
 func (c *Character) GetIdleTarget() *gameobjects.Location {
 	return c.idleTarget
 }
@@ -346,9 +358,13 @@ func (c *Character) selectAction(gs GameStateI) Action {
 		if c.target == nil {
 			// Find a target and perform recon
 			c.target = c.FindTarget(gs.GetLocations())
+			c.reconCount = 0
+		}
+		// Check if should perform recon
+		if c.ShouldRecon() {
 			return CreateReconAction()
 		}
-		// If they have a target
+		// Perform role action
 		return c.Role.RoleAction
 	}
 	// Spare time, so recreate, maybe
@@ -367,6 +383,14 @@ func (c *Character) selectAction(gs GameStateI) Action {
 	}
 	// Not doing anything else, so rest
 	return c.Role.RestAction
+}
+
+func (c *Character) ShouldRecon() bool {
+	if c.reconCount < c.GetReconTimes() {
+		c.reconCount++
+		return true
+	}
+	return false
 }
 
 func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
@@ -410,6 +434,8 @@ func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 	}
 	// A little kludgy, but it does allow me to wrap the method in one place
 	c.FindTarget = behavior.FindTarget(role.FindTarget(findTarget))
+	c.GetRisk = behavior.GetRiskPercent(c.getRisk)
+	c.GetReconTimes = behavior.GetReconModifier(getReconTimes)
 	return c
 }
 

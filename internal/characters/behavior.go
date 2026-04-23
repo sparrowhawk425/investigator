@@ -13,6 +13,8 @@ type Behavior struct {
 	Desc               string
 	QualityPreference  []gameobjects.Quality
 	LocationPreference []gameobjects.LocationType
+	RiskModifier       int
+	ReconModifier      int
 }
 
 func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
@@ -44,6 +46,18 @@ func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobject
 	}
 }
 
+func (b Behavior) GetRiskPercent(getRisk func() int) func() int {
+	return func() int {
+		return getRisk() + b.RiskModifier
+	}
+}
+
+func (b Behavior) GetReconModifier(reconTimes func() int) func() int {
+	return func() int {
+		return reconTimes() + b.ReconModifier
+	}
+}
+
 func CreateFrugal() Behavior {
 	return Behavior{
 		Name:              "Frugal",
@@ -68,8 +82,23 @@ func CreateGambler() Behavior {
 	}
 }
 
-// Cautious - lower risk chances and performs additional recon
-// Reckless - higher risk chances and performs less recon
+func CreateCautious() Behavior {
+	return Behavior{
+		Name:          "Cautious",
+		Desc:          "Takes fewer risks and takes more time to reconnoiter",
+		RiskModifier:  -10,
+		ReconModifier: 3,
+	}
+}
+
+func CreateReckless() Behavior {
+	return Behavior{
+		Name:          "Reckless",
+		Desc:          "Takes more rists and takes less time to reconnoiter",
+		RiskModifier:  10,
+		ReconModifier: -1,
+	}
+}
 
 var RegularBehaviors = []Behavior{
 	CreateFrugal(), CreateProfligate(), CreateGambler(),

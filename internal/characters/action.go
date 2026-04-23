@@ -249,7 +249,7 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 	}
 	if len(stolenLoot) > 0 {
 		gs.CreateCrime(*person.GetTarget(), crime, stolenLoot)
-		riskPct := person.Role.RoleAction.Risk + person.GetTarget().GetRiskPercent()
+		riskPct := person.GetRisk() + person.GetTarget().GetRiskPercent()
 		percent := rand.IntN(101)
 		if riskPct > percent {
 			gs.CreateClue(*person.GetTarget(), person.CreateClue())

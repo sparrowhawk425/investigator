@@ -39,7 +39,7 @@ help: Display the list of available commands
 
 ```bash
 git clone https://github.com/sparrowhawk425/investigator@latest
-cd zipzod
+cd investigator
 ```
 
 ### Build the compiled binary

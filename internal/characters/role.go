@@ -34,6 +34,9 @@ func (r Role) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Lo
 		if len(targets) == 0 {
 			targets = functions.Filter(locations, gameobjects.FilterLocationsByLootType(r.preferredLoot))
 		}
+		if len(targets) == 0 {
+			targets = locations
+		}
 		return findTarget(targets)
 	}
 }
