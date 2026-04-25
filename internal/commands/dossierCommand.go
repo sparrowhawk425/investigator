@@ -45,6 +45,12 @@ func GetDossierCommandMap() map[string]cliCommand {
 			advancesTime: false,
 			Callback:     commandDossierUpdate,
 		},
+		"delete": {
+			name:         "delete",
+			description:  "Delete an existing Dossier. Optionally include the name of the dossier to match as an argument",
+			advancesTime: false,
+			Callback:     commandDossierDelete,
+		},
 		"match": {
 			name:         "match",
 			description:  "Get a list of matches for this Dossier. Optionally include the name of the dossier to match as an argument",
@@ -136,6 +142,20 @@ func commandDossierUpdate(gs *gamelogic.GameState, params []string) (bool, error
 	}
 	updateDossier(gs.Scanner, &gs.Player.Dossiers[idx])
 
+	return false, nil
+}
+
+func commandDossierDelete(gs *gamelogic.GameState, params []string) (bool, error) {
+	if len(gs.Player.Dossiers) == 0 {
+		fmt.Println("No Dossiers to delete")
+		return false, nil
+	}
+	idx := getDossierIndex(gs, params)
+	if idx == -1 {
+		fmt.Println("No Dossier with that name exists")
+		return false, nil
+	}
+	gs.Player.Dossiers = slices.Delete(gs.Player.Dossiers, idx, idx)
 	return false, nil
 }
 
@@ -234,6 +254,10 @@ const (
 	dDone      dossierMenu = "Done"
 )
 
+func (dm dossierMenu) String() string {
+	return string(dm)
+}
+
 var dossierMenuItems = []dossierMenu{
 	dName, dCharacter, dNotes, dDone,
 }
@@ -241,7 +265,7 @@ var dossierMenuItems = []dossierMenu{
 func updateDossier(scanner *bufio.Scanner, dossier *characters.Dossier) {
 	isDone := false
 	for !isDone {
-		idx := gamelogic.MenuSelect(scanner, "Choose Field:", lo.Map(dossierMenuItems, func(m dossierMenu, _ int) string { return string(m) }))
+		idx := gamelogic.MenuSelect(scanner, "Select an option:", lo.Map(dossierMenuItems, func(dm dossierMenu, _ int) string { return dm.String() }))
 		option := dossierMenuItems[idx]
 		switch option {
 		case dName:
@@ -251,9 +275,7 @@ func updateDossier(scanner *bufio.Scanner, dossier *characters.Dossier) {
 		case dCharacter:
 			updateCharacter(scanner, dossier)
 		case dNotes:
-			fmt.Print("Note: ")
-			scanner.Scan()
-			dossier.AddNote(scanner.Text())
+			updateNotes(scanner, dossier)
 		case dDone:
 			isDone = true
 		}
@@ -275,6 +297,10 @@ const (
 	cDone        characterMenu = "Done"
 )
 
+func (cm characterMenu) String() string {
+	return string(cm)
+}
+
 var characterMenuItems = []characterMenu{
 	cName, cGender, cNationality, cHeight, cWeight, cEyeColor, cHairColor, cHairLength, cShoeSize, cDone,
 }
@@ -292,7 +318,7 @@ func updateCharacter(scanner *bufio.Scanner, dossier *characters.Dossier) {
 
 	isDone := false
 	for !isDone {
-		idx := gamelogic.MenuSelect(scanner, "Choose Field:", lo.Map(characterMenuItems, func(m characterMenu, _ int) string { return string(m) }))
+		idx := gamelogic.MenuSelect(scanner, "Select an option:", lo.Map(characterMenuItems, func(cm characterMenu, _ int) string { return cm.String() }))
 		option := characterMenuItems[idx]
 		switch option {
 		case cName:
@@ -328,6 +354,41 @@ func updateCharacter(scanner *bufio.Scanner, dossier *characters.Dossier) {
 			dossier.Target.Traits.ShoeSize = clueShoeSizes[idx]
 		case cDone:
 			isDone = true
+		}
+	}
+}
+
+type noteMenu string
+
+const (
+	addNote    noteMenu = "Add"
+	deleteNote noteMenu = "Delete"
+	doneNote   noteMenu = "Done"
+)
+
+func (nm noteMenu) String() string {
+	return string(nm)
+}
+
+var noteMenuItems = []noteMenu{
+	addNote, deleteNote, doneNote,
+}
+
+func updateNotes(scanner *bufio.Scanner, dossier *characters.Dossier) {
+	option := addNote
+	for option != doneNote {
+		if len(dossier.Notes) > 0 {
+			idx := gamelogic.MenuSelect(scanner, "Select an option:", lo.Map(noteMenuItems, func(nm noteMenu, _ int) string { return nm.String() }))
+			option = noteMenuItems[idx]
+		}
+		switch option {
+		case addNote:
+			fmt.Print("Note: ")
+			scanner.Scan()
+			dossier.AddNote(scanner.Text())
+		case deleteNote:
+			idx := gamelogic.MenuSelect(scanner, "Select note to delete:", dossier.Notes)
+			dossier.Notes = slices.Delete(dossier.Notes, idx, idx)
 		}
 	}
 }

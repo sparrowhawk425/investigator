@@ -217,6 +217,10 @@ type name struct {
 	last  string
 }
 
+func (n name) Equals(other name) bool {
+	return n.first == other.first && n.last == other.last
+}
+
 type Character struct {
 	name    name
 	Traits  Characteristics
@@ -231,14 +235,32 @@ type Character struct {
 	target     *gameobjects.Location
 	idleTarget *gameobjects.Location
 	FindTarget func([]gameobjects.Location) *gameobjects.Location
-	GetRisk    func() int
+
+	GetLootAmount func(int) int
+	GetRisk       func() int
 
 	reconCount    int
 	GetReconTimes func() int
 }
 
+func (c Character) Equals(other Character) bool {
+	return c.name.Equals(other.name) && c.Address.Equals(other.Address)
+}
+
+func getLootAmount(maxAmount int) int {
+	return rand.IntN(maxAmount)
+}
+
 func getReconTimes() int {
 	return 1
+}
+
+func findTarget(locations []gameobjects.Location) *gameobjects.Location {
+	return &locations[rand.IntN(len(locations))]
+}
+
+func (c Character) getRisk() int {
+	return c.Role.RoleAction.Risk
 }
 
 func (c Character) GetName() string {
@@ -298,16 +320,16 @@ func (c *Character) SetTarget(loc *gameobjects.Location) {
 	c.target = loc
 }
 
-func findTarget(locations []gameobjects.Location) *gameobjects.Location {
-	return &locations[rand.IntN(len(locations))]
-}
-
-func (c Character) getRisk() int {
-	return c.Role.RoleAction.Risk
-}
-
-func (c *Character) GetIdleTarget() *gameobjects.Location {
+func (c *Character) GetIdleLocation() *gameobjects.Location {
 	return c.idleTarget
+}
+
+func (c Character) GetJobLocation() *gameobjects.Location {
+	return c.Role.JobLocation
+}
+
+func (c *Character) SetJobLocation(location *gameobjects.Location) {
+	c.Role.JobLocation = location
 }
 
 func (c Character) GetItems() gameobjects.Inventory {
@@ -355,8 +377,8 @@ func (c *Character) selectAction(gs GameStateI) Action {
 		if isCriminal && c.Goal.IsComplete() {
 			return CreateEscapeAction()
 		}
+		// Find a target
 		if c.target == nil {
-			// Find a target and perform recon
 			c.target = c.FindTarget(gs.GetLocations())
 			c.reconCount = 0
 		}
@@ -434,6 +456,7 @@ func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 	}
 	// A little kludgy, but it does allow me to wrap the method in one place
 	c.FindTarget = behavior.FindTarget(role.FindTarget(findTarget))
+	c.GetLootAmount = behavior.GetLootAmount(getLootAmount)
 	c.GetRisk = behavior.GetRiskPercent(c.getRisk)
 	c.GetReconTimes = behavior.GetReconModifier(getReconTimes)
 	return c

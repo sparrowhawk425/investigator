@@ -21,6 +21,7 @@ type cliCommand struct {
 	Callback     func(*gamelogic.GameState, []string) (bool, error)
 }
 
+// TODO: Need profile command (something to help in between crimes)
 func GetCommandMap() map[string]cliCommand {
 	commandMap := map[string]cliCommand{
 		"exit": {
@@ -70,6 +71,12 @@ func GetCommandMap() map[string]cliCommand {
 			description:  "Choose a location to visit from a menu",
 			advancesTime: true,
 			Callback:     commandVisitLocation,
+		},
+		"bolo": {
+			name:         "bolo",
+			description:  "Send out a notice to look for a person. Optionally, provide subcommand, 'list' to see current active BOLOs. Otherwise create a new BOLO",
+			advancesTime: false,
+			Callback:     commandCreateBolo,
 		},
 		"arrest": {
 			name:         "arrest",
@@ -169,6 +176,27 @@ func commandVisitLocation(gs *gamelogic.GameState, _ []string) (bool, error) {
 	gs.Player.CurrentLocation = &gs.Places[idx]
 
 	return true, nil
+}
+
+func commandCreateBolo(gs *gamelogic.GameState, params []string) (bool, error) {
+
+	if len(params) > 0 {
+		switch params[0] {
+		case "list":
+			if len(gs.Bolos) == 0 {
+				fmt.Println("There are no active BOLOs")
+			} else {
+				fmt.Println("Active BOLOs:")
+				for _, bolo := range gs.Bolos {
+					fmt.Printf(" - %s\n", bolo.GetName())
+				}
+			}
+			return false, nil
+		}
+	}
+	idx := gamelogic.MenuSelect(gs.Scanner, "Who do you want to create a BOLO for?", lo.Map(gs.People, func(c characters.Character, _ int) string { return c.GetName() }))
+	gs.Bolos = append(gs.Bolos, gs.People[idx])
+	return false, nil
 }
 
 func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {

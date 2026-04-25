@@ -29,11 +29,13 @@ const (
 	Restaurant LocationType = "Restaurant"
 	Casino     LocationType = "Casino"
 	PawnShop   LocationType = "Pawn Shop"
-	Fence      LocationType = "Fence"
+
+	Fence    LocationType = "Fence"
+	DeadDrop LocationType = "Dead Drop"
 )
 
 var LocationTypes = []LocationType{
-	Residence, Hotel, Store, Bank, Museum, Business, Restaurant, Casino, PawnShop, Fence,
+	Residence, Hotel, Store, Bank, Museum, Business, Restaurant, Casino, PawnShop,
 }
 
 var RecreationLocations = []LocationType{
@@ -42,6 +44,10 @@ var RecreationLocations = []LocationType{
 
 var ShopLocations = []LocationType{
 	Store, PawnShop,
+}
+
+var CrimeLocations = []LocationType{
+	Fence, DeadDrop,
 }
 
 func (LocationType) IsType() bool {
@@ -66,6 +72,10 @@ func GetLocationType(locTypeStr string) (LocationType, error) {
 type Address struct {
 	Number int
 	Name   string
+}
+
+func (a Address) String() string {
+	return fmt.Sprintf("%d %s", a.Number, a.Name)
 }
 
 type Quality int

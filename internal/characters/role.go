@@ -15,6 +15,7 @@ type Role struct {
 	preferredLoot   []gameobjects.LootType
 	Solitary        bool
 	Freelancer      bool
+	JobLocation     *gameobjects.Location
 
 	RoleAction Action
 	RestAction Action
@@ -28,6 +29,7 @@ var CriminalRoles = []Role{
 	CreateBurglar(), CreateRobber(),
 }
 
+// TODO: Can we avoid the checks for 0 valid targets?
 func (r Role) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
 	return func(locations []gameobjects.Location) *gameobjects.Location {
 		targets := functions.Filter(locations, gameobjects.FilterLocationsByType(r.targetLocations))
@@ -151,6 +153,7 @@ func CreateRobber() Role {
 	}
 }
 
+// TODO: Gets jobs from Fixer dead drops?
 func CreateVandal() Role {
 	return Role{
 		Name:         "Vandal",

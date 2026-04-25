@@ -17,18 +17,21 @@ import (
 )
 
 type GameState struct {
-	Scanner   *bufio.Scanner
-	DayNumber int
-	WeekDay   times.DayOfTheWeek
-	TimeOfDay times.TimeOfDay
-	Player    characters.Player
-	Places    []gameobjects.Location
-	People    []characters.Character
-	Criminals []characters.Character
-	Escaping  []characters.Character
-	Escaped   []characters.Character
-	Caught    []characters.Character
-	Crimes    []Crime
+	Scanner     *bufio.Scanner
+	DayNumber   int
+	WeekDay     times.DayOfTheWeek
+	TimeOfDay   times.TimeOfDay
+	Player      characters.Player
+	Places      []gameobjects.Location
+	CrimePlaces []gameobjects.Location
+	People      []characters.Character
+	Criminals   []*characters.Character
+	Escaping    []characters.Character
+	Escaped     []characters.Character
+	Caught      []characters.Character
+	Crimes      []Crime
+
+	Bolos []characters.Character
 
 	newCrimes bool
 }
@@ -68,22 +71,23 @@ func (gs *GameState) BuildGame() {
 	peopleResults := results[half:]
 
 	// Create locations
-	apiLocations := lo.Map(locationResults, func(character nameapi.Character, i int) nameapi.Location { return character.Location })
+	numCrimeLocs := len(gameobjects.CrimeLocations) * 2
+	crimeLocations := locationResults[:numCrimeLocs]
+	for i, apiLoc := range crimeLocations {
+		gs.CrimePlaces = append(gs.CrimePlaces, gameobjects.CreateLocation(apiLoc.Location, gameobjects.CrimeLocations[i%len(gameobjects.CrimeLocations)], true))
+	}
+	apiLocations := lo.Map(locationResults[numCrimeLocs:], func(character nameapi.Character, i int) nameapi.Location { return character.Location })
 	gs.Places = gameobjects.CreateRandomLocations(apiLocations)
 
 	// Create people
 	for i := range peopleResults {
 		if i < 2 {
 			c := characters.CreateRandomCharacter(peopleResults[i], characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))])
-			// Some criminals will already have a target selected
-			if rand.IntN(100) < 50 {
-				c.SetTarget(c.FindTarget(gs.Places))
-			}
 			gs.People = append(gs.People, c)
-			gs.Criminals = append(gs.Criminals, c)
+			gs.Criminals = append(gs.Criminals, &c)
 		} else {
 			c := characters.CreateRandomCharacter(peopleResults[i], characters.RegularRoles[rand.IntN(len(characters.RegularRoles))])
-			c.SetTarget(c.FindTarget(gs.Places))
+			c.SetJobLocation(c.FindTarget(gs.Places))
 			gs.People = append(gs.People, c)
 		}
 	}
@@ -184,12 +188,34 @@ func (gs GameState) GetPlayer() characters.Player {
 	return gs.Player
 }
 
+func (gs GameState) HasBolo(person characters.Character) bool {
+	return slices.ContainsFunc(gs.Bolos, person.Equals)
+}
+
+func (gs GameState) CreateBoloAlert(location *gameobjects.Location, name string) {
+	red := color.New(color.FgRed).SprintFunc()
+	fmt.Printf("%s %s spotted near %s\n", red("BOLO Alert:"), name, location.Address)
+	if !slices.ContainsFunc(gs.Places, location.Equals) {
+		color.Green("Location not previously monitored. Adding %s to tracked locations", location.Address)
+		gs.Places = append(gs.Places, *location)
+	}
+}
+
+func matchCriminalFunc(person *characters.Character) func(*characters.Character) bool {
+	return func(c *characters.Character) bool {
+		return c.Equals(*person)
+	}
+}
+
 func (gs *GameState) ArrestCriminal(target characters.Character) {
 
 	fmt.Printf("Arresting %s...\n", target.GetName())
-	characterMatchFunc := func(c characters.Character) bool { return c.GetName() == target.GetName() }
-	if slices.ContainsFunc(gs.Criminals, characterMatchFunc) {
+	if slices.ContainsFunc(gs.Criminals, matchCriminalFunc(&target)) {
 		gs.RemoveCriminal("You have successfully identified and arrested a member of the Syndicate. Well done.", target, true)
+		// Remove criminal from the list of active BOLOs
+		if slices.ContainsFunc(gs.Bolos, target.Equals) {
+			gs.Bolos = slices.DeleteFunc(gs.Bolos, target.Equals)
+		}
 	} else {
 		fmt.Printf("Unfortunately, %s is not a member of the Syndicate\n", target.GetName())
 	}
@@ -200,10 +226,9 @@ func (gs *GameState) SetCriminalEscaping(person characters.Character) {
 }
 
 func (gs *GameState) RemoveCriminal(msg string, person characters.Character, wasCaught bool) {
-	characterMatchFunc := func(c characters.Character) bool { return c.GetName() == person.GetName() }
 	fmt.Println(msg)
-	gs.People = slices.DeleteFunc(gs.People, characterMatchFunc)
-	gs.Criminals = slices.DeleteFunc(gs.Criminals, characterMatchFunc)
+	gs.People = slices.DeleteFunc(gs.People, person.Equals)
+	gs.Criminals = slices.DeleteFunc(gs.Criminals, matchCriminalFunc(&person))
 	if wasCaught {
 		gs.Caught = append(gs.Caught, person)
 	} else {
@@ -227,6 +252,10 @@ func (gs *GameState) Update() {
 	for i := range gs.People {
 		gs.People[i].PerformAction(gs)
 	}
+	// TODO: Announce criminal milestones (50% to reaching goal; only the first time)
+	// for i := range gs.Criminals {
+	// 	gs.Criminals[i].Goal.Progress
+	// }
 
 	// TODO: Need better way to incorporate the player in the update loop
 	if gs.Player.Action != nil {

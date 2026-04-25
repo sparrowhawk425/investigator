@@ -18,6 +18,8 @@ type GameStateI interface {
 	CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot)
 	CreateClue(location gameobjects.Location, clue string)
 	TransferItems(lootType gameobjects.LootType, amount int, src gameobjects.ItemHolder, dest gameobjects.ItemHolder)
+	HasBolo(person Character) bool
+	CreateBoloAlert(location *gameobjects.Location, name string)
 	SetCriminalEscaping(person Character)
 }
 
@@ -147,7 +149,7 @@ func RestAction(gs GameStateI, person *Character) {
 }
 
 func GuardAction(gs GameStateI, person *Character) {
-	gs.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetJobLocation(), *person)
 
 	if gs.GetDayOfTheWeek() == times.Monday {
 		person.AddItems(gameobjects.Money, 15)
@@ -155,7 +157,7 @@ func GuardAction(gs GameStateI, person *Character) {
 }
 
 func BankingAction(gs GameStateI, person *Character) {
-	gs.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetJobLocation(), *person)
 
 	if gs.GetDayOfTheWeek() == times.Monday {
 		person.AddItems(gameobjects.Money, 25)
@@ -163,7 +165,7 @@ func BankingAction(gs GameStateI, person *Character) {
 }
 
 func ManagingAction(gs GameStateI, person *Character) {
-	gs.AddCharacterToLocation(*person.GetTarget(), *person)
+	gs.AddCharacterToLocation(*person.GetJobLocation(), *person)
 
 	if gs.GetDayOfTheWeek() == times.Monday {
 		person.AddItems(gameobjects.Money, 50)
@@ -171,28 +173,31 @@ func ManagingAction(gs GameStateI, person *Character) {
 }
 
 func VisitAction(gs GameStateI, person *Character) {
-	gs.AddCharacterToLocation(*person.GetIdleTarget(), *person)
-	price := person.GetIdleTarget().GetAdmissionPrice()
-	gs.TransferItems(gameobjects.Money, price, person, person.GetIdleTarget())
+	gs.AddCharacterToLocation(*person.GetIdleLocation(), *person)
+	price := person.GetIdleLocation().GetAdmissionPrice()
+	gs.TransferItems(gameobjects.Money, price, person, person.GetIdleLocation())
+	// TODO: Easier way to add BOLO check to actions?
+	checkBolo(gs, person)
 }
 
 func SellingAction(gs GameStateI, person *Character) {
 
-	gs.AddCharacterToLocation(*person.GetIdleTarget(), *person)
-	money := person.GetIdleTarget().GetLootAmount(gameobjects.Money)
+	gs.AddCharacterToLocation(*person.GetIdleLocation(), *person)
+	money := person.GetIdleLocation().GetLootAmount(gameobjects.Money)
 	for lootType, loot := range person.GetItems() {
 		if lootType == gameobjects.Money {
 			continue
 		}
-		quantity := getLootAmount(money, loot.Quantity, loot.Value)
-		gs.TransferItems(lootType, loot.Quantity, person, person.GetIdleTarget())
+		quantity := getSellAmount(money, loot.Quantity, loot.Value)
+		gs.TransferItems(lootType, loot.Quantity, person, person.GetIdleLocation())
 		value := quantity * loot.Value
-		gs.TransferItems(gameobjects.Money, value, person.GetIdleTarget(), person)
+		gs.TransferItems(gameobjects.Money, value, person.GetIdleLocation(), person)
 		money -= value
 	}
+	checkBolo(gs, person)
 }
 
-func getLootAmount(max, quantity, value int) int {
+func getSellAmount(max, quantity, value int) int {
 	for quantity*value > max {
 		quantity--
 	}
@@ -231,7 +236,6 @@ func EscapeAction(gs GameStateI, person *Character) {
 
 // Helpers
 
-// TODO: There seem to be an inordinate amount of zeros returned from rand...
 func takeLoot(gs GameStateI, crime string, person *Character) {
 
 	gs.AddCharacterToLocation(*person.GetTarget(), *person)
@@ -240,7 +244,7 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 		maxLoot := person.GetTarget().GetLootAmount(lootType)
 		// Take a random amount of the available loot
 		if maxLoot > 0 {
-			amt := rand.IntN(maxLoot + 1)
+			amt := person.GetLootAmount(maxLoot)
 			if amt > 0 {
 				gs.TransferItems(lootType, amt, person.GetTarget(), person)
 				stolenLoot = append(stolenLoot, gameobjects.Loot{Type: lootType, Quantity: amt, Value: lootType.GetValue()})
@@ -253,6 +257,17 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 		percent := rand.IntN(101)
 		if riskPct > percent {
 			gs.CreateClue(*person.GetTarget(), person.CreateClue())
+		}
+	}
+	checkBolo(gs, person)
+}
+
+func checkBolo(gs GameStateI, person *Character) {
+
+	if gs.HasBolo(*person) {
+		exposed := rand.IntN(100)
+		if person.getRisk() > exposed {
+			gs.CreateBoloAlert(person.GetIdleLocation(), person.GetName())
 		}
 	}
 }
