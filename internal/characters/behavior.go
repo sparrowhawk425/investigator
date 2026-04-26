@@ -14,6 +14,8 @@ type Behavior struct {
 	LootAmountModifier int //percent
 	RiskModifier       int
 	ReconModifier      int
+
+	mutuallyExclusive []string
 }
 
 func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
@@ -60,6 +62,7 @@ func CreateFrugal() Behavior {
 		Desc:               "Prone to conserving money and prefer cheap locations",
 		QualityPreference:  []gameobjects.Quality{gameobjects.Cheap},
 		LootAmountModifier: -20,
+		mutuallyExclusive:  []string{"Profligate"},
 	}
 }
 
@@ -69,6 +72,7 @@ func CreateProfligate() Behavior {
 		Desc:               "Prone to spending money and prefer expensive locations",
 		QualityPreference:  []gameobjects.Quality{gameobjects.Expensive},
 		LootAmountModifier: 20,
+		mutuallyExclusive:  []string{"Frugal"},
 	}
 }
 
@@ -82,24 +86,26 @@ func CreateGambler() Behavior {
 
 func CreateCautious() Behavior {
 	return Behavior{
-		Name:          "Cautious",
-		Desc:          "Takes fewer risks and takes more time to reconnoiter",
-		RiskModifier:  -10,
-		ReconModifier: 3,
+		Name:              "Cautious",
+		Desc:              "Takes fewer risks and takes more time to reconnoiter",
+		RiskModifier:      -10,
+		ReconModifier:     3,
+		mutuallyExclusive: []string{"Reckless"},
 	}
 }
 
 func CreateReckless() Behavior {
 	return Behavior{
-		Name:          "Reckless",
-		Desc:          "Takes more rists and takes less time to reconnoiter",
-		RiskModifier:  10,
-		ReconModifier: -1,
+		Name:              "Reckless",
+		Desc:              "Takes more rists and takes less time to reconnoiter",
+		RiskModifier:      10,
+		ReconModifier:     -1,
+		mutuallyExclusive: []string{"Cautious"},
 	}
 }
 
 var RegularBehaviors = []Behavior{
-	CreateFrugal(), CreateProfligate(), CreateGambler(),
+	CreateFrugal(), CreateProfligate(), CreateGambler(), CreateCautious(), CreateReckless(),
 }
 
 func CreateSquatter() Behavior {

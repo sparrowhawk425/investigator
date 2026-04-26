@@ -198,7 +198,7 @@ func (loc Location) GetAdmissionPrice() int {
 	case Expensive:
 		qual = 3
 	}
-	price := 1
+	price := 0
 	switch loc.Type {
 	case Restaurant:
 		price = 2
@@ -207,7 +207,12 @@ func (loc Location) GetAdmissionPrice() int {
 	case Museum:
 		price = 10
 	case Casino:
-		price = 20
+		gamble := rand.IntN(100)
+		if gamble > 94 {
+			price = -20
+		} else {
+			price = 20
+		}
 	}
 	return price * qual
 }
@@ -357,7 +362,7 @@ func parsePostCode(data []byte) string {
 	return string(data)
 }
 
-func setAvailableLoot(locType LocationType, quality Quality) map[LootType]Loot {
+func setAvailableLoot(locType LocationType, quality Quality) Inventory {
 	maxAmt := 1
 	switch quality {
 	case Cheap:
@@ -367,7 +372,7 @@ func setAvailableLoot(locType LocationType, quality Quality) map[LootType]Loot {
 	case Expensive:
 		maxAmt = 10
 	}
-	loot := make(map[LootType]Loot)
+	loot := make(Inventory)
 	switch locType {
 	case Residence:
 		loot[Jewelry] = Loot{Type: Jewelry, Quantity: rand.IntN(maxAmt), Value: Jewelry.GetValue()}

@@ -166,7 +166,7 @@ func CreateVandal() Role {
 			gameobjects.Electronics, gameobjects.Money, gameobjects.Cars,
 		},
 		Solitary:   true,
-		Freelancer: true,
+		Freelancer: false,
 		RoleAction: CreateVandalizeAction(),
 		RestAction: CreateLieLowAction(),
 	}

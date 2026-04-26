@@ -252,10 +252,13 @@ func (gs *GameState) Update() {
 	for i := range gs.People {
 		gs.People[i].PerformAction(gs)
 	}
-	// TODO: Announce criminal milestones (50% to reaching goal; only the first time)
-	// for i := range gs.Criminals {
-	// 	gs.Criminals[i].Goal.Progress
-	// }
+	// Announce criminal milestones (50% to reaching goal)
+	for i := range gs.Criminals {
+		for _, alert := range gs.Criminals[i].Goal.Alerts {
+			color.Yellow(alert)
+		}
+		gs.Criminals[i].Goal.Alerts = nil
+	}
 
 	// TODO: Need better way to incorporate the player in the update loop
 	if gs.Player.Action != nil {
