@@ -18,7 +18,7 @@ type Role struct {
 	JobLocation     *gameobjects.Location
 
 	RoleAction Action
-	RestAction Action
+	IdleAction Action
 }
 
 var RegularRoles = []Role{
@@ -57,7 +57,7 @@ func CreateDayGuard() Role {
 		Solitary:   false,
 		Freelancer: false,
 		RoleAction: CreateGuardAction(),
-		RestAction: CreateRestAction(),
+		IdleAction: CreateRestAction(),
 	}
 }
 
@@ -75,7 +75,7 @@ func CreateNightGuard() Role {
 		Solitary:   false,
 		Freelancer: false,
 		RoleAction: CreateGuardAction(),
-		RestAction: CreateRestAction(),
+		IdleAction: CreateRestAction(),
 	}
 }
 
@@ -93,7 +93,7 @@ func CreateBanker() Role {
 		Solitary:   false,
 		Freelancer: false,
 		RoleAction: CreateBankingAction(),
-		RestAction: CreateRestAction(),
+		IdleAction: CreateRestAction(),
 	}
 }
 
@@ -111,7 +111,7 @@ func CreateManager() Role {
 		Solitary:   false,
 		Freelancer: false,
 		RoleAction: CreateManagingAction(),
-		RestAction: CreateRestAction(),
+		IdleAction: CreateRestAction(),
 	}
 }
 
@@ -131,7 +131,7 @@ func CreateBurglar() Role {
 		Solitary:   true,
 		Freelancer: true,
 		RoleAction: CreateBurgleAction(),
-		RestAction: CreateLieLowAction(),
+		IdleAction: CreateLieLowAction(),
 	}
 }
 
@@ -149,7 +149,7 @@ func CreateRobber() Role {
 		Solitary:   false,
 		Freelancer: true,
 		RoleAction: CreateRobAction(),
-		RestAction: CreateLieLowAction(),
+		IdleAction: CreateLieLowAction(),
 	}
 }
 
@@ -168,7 +168,7 @@ func CreateVandal() Role {
 		Solitary:   true,
 		Freelancer: false,
 		RoleAction: CreateVandalizeAction(),
-		RestAction: CreateLieLowAction(),
+		IdleAction: CreateLieLowAction(),
 	}
 }
 

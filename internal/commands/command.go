@@ -13,7 +13,7 @@ import (
 
 // TODO: Use argparse package? https://pkg.go.dev/github.com/akamensky/argparse
 
-// Callback performs command action. Returns true if time should be updated
+// Callback performs command action. Returns true if time phase should be advanced
 type cliCommand struct {
 	name         string
 	description  string
@@ -21,7 +21,11 @@ type cliCommand struct {
 	Callback     func(*gamelogic.GameState, []string) (bool, error)
 }
 
-// TODO: Need profile command (something to help in between crimes)
+/*
+TODO: Need profile command (something to help in between crimes)
+Monty Hall game? Remove one option from a criminal: does not have green eyes. What does the player actually do here?
+Trivia game: Gather data for each map and have players answer questions. Success somehow earns facts about targets? Maybe this is the reward for capturing and leads to the next part?
+*/
 func GetCommandMap() map[string]cliCommand {
 	commandMap := map[string]cliCommand{
 		"exit": {

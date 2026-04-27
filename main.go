@@ -35,7 +35,8 @@ func main() {
 	commands := commands.GetCommandMap()
 	var err error
 	for {
-		// TODO: Expand to move to another region, chasing bosses
+		// TODO: Expand to move to another region, chasing bosses. Each member you catch has a few postcards with locations from around the world. One points to the correct next area. Catch enough of the members, you can narrow down the location
+		// https://pkg.go.dev/github.com/yudai2929/asciiart#section-readme
 		if len(gameState.Criminals) == 0 {
 			if len(gameState.Escaped) == 0 {
 				color.Green("Congratulations! You have caught all the Synidcate members in the area!")

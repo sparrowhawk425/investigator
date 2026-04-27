@@ -233,7 +233,7 @@ func (c *Character) selectAction(gs GameStateI) Action {
 		return CreateVisitingAction()
 	}
 	// Not doing anything else, so rest
-	return c.Role.RestAction
+	return c.Role.IdleAction
 }
 
 func (c *Character) ShouldRecon() bool {

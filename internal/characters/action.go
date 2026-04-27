@@ -228,6 +228,7 @@ func RobAction(gs GameStateI, person *Character) {
 }
 
 func VandalizeAction(gs GameStateI, person *Character) {
+
 }
 
 func EscapeAction(gs GameStateI, person *Character) {
