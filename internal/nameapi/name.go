@@ -6,29 +6,17 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/sparrowhawk425/investigators/internal/config"
 )
 
 // v1.4
 // Countries: AU, BR, CA, CH, DE, DK, ES, FI, FR, GB, IE, IN, IR, MX, NL, NO, NZ, RS, TR, UA, US
-type Country struct {
-	Name string
-	Code string
-}
-
-// Iran names are in Arabic, so probably a little hard to read for English-based game
-var Countries = []Country{
-	{Name: "Australia", Code: "AU"}, {Name: "Brazil", Code: "BR"}, {Name: "Canada", Code: "CA"}, {Name: "Switzerland", Code: "CH"},
-	{Name: "Germany", Code: "DE"}, {Name: "Denmark", Code: "DK"}, {Name: "Spain", Code: "ES"}, {Name: "Finland", Code: "FI"},
-	{Name: "France", Code: "FR"}, {Name: "Great Britain", Code: "GB"}, {Name: "Ireland", Code: "IE"}, {Name: "India", Code: "IN"},
-	{Name: "Mexico", Code: "MX"}, {Name: "Netherlands", Code: "NL"}, {Name: "Norway", Code: "NO"}, {Name: "New Zealand", Code: "NZ"},
-	{Name: "Serbia", Code: "RS"}, {Name: "Türkiye", Code: "TR"}, {Name: "Ukraine", Code: "UA"}, {Name: "United States", Code: "US"},
-}
-
 const nameApi = "https://randomuser.me/api"
 
-func MakeHTTPGetRequest(country Country, numResults int) ([]Character, error) {
+func MakeHTTPGetRequest(country config.Country, numResults int) ([]Character, error) {
 
-	url := fmt.Sprintf("%s?nat=%s&results=%d", nameApi, country.Code, numResults)
+	url := fmt.Sprintf("%s?nat=%s&results=%d", nameApi, country.GetCode(), numResults)
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err

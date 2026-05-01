@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
+	"github.com/sparrowhawk425/investigators/internal/config"
 	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
 )
@@ -306,7 +307,7 @@ var characterMenuItems = []characterMenu{
 }
 
 var clueGenders = append(characters.Genders, characters.UnknownGender)
-var clueNationalities = append(characters.Nationalities, characters.UnknownNationality)
+var clueNationalities = append(config.CountryCodes, characters.UnknownNationality)
 var clueHeights = append(characters.Heights, characters.UnknownHeight)
 var clueWeights = append(characters.Weights, characters.UnknownWeight)
 var clueEyeColors = append(characters.EyeColors, characters.UnknownEyes)
@@ -332,7 +333,7 @@ func updateCharacter(scanner *bufio.Scanner, dossier *characters.Dossier) {
 			idx = gamelogic.MenuSelect(scanner, "Gender:", lo.Map(clueGenders, func(g characters.Gender, _ int) string { return g.String() }))
 			dossier.Target.Traits.Gender = clueGenders[idx]
 		case cNationality:
-			idx = gamelogic.MenuSelect(scanner, "Nationality:", lo.Map(clueNationalities, func(n characters.Nationality, _ int) string { return n.String() }))
+			idx = gamelogic.MenuSelect(scanner, "Nationality:", lo.Map(clueNationalities, func(cc config.CountryCode, _ int) string { return cc.String() }))
 			dossier.Target.Traits.Nationality = clueNationalities[idx]
 		case cHeight:
 			idx = gamelogic.MenuSelect(scanner, "Height:", lo.Map(clueHeights, func(h characters.Height, _ int) string { return h.String() }))
@@ -386,7 +387,7 @@ func updateNotes(scanner *bufio.Scanner, dossier *characters.Dossier) {
 			fmt.Print("Note: ")
 			scanner.Scan()
 			dossier.AddNote(scanner.Text())
-		case deleteNote:
+		case deleteNote: // TODO: delete doesn't work?
 			idx := gamelogic.MenuSelect(scanner, "Select note to delete:", dossier.Notes)
 			dossier.Notes = slices.Delete(dossier.Notes, idx, idx)
 		}

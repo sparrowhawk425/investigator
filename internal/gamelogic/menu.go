@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"strconv"
+
+	"github.com/fatih/color"
 )
 
 type ToString interface {
@@ -45,6 +47,7 @@ type FilterFunc[T any] func(T, int) bool
 // 	return nil
 // }
 
+// Maybe map of filtertype to filterfunc?
 func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, items []T, filterTypes []FilterType) int {
 
 	// TODO: Figure out how to set up generic filter function selectors
@@ -58,6 +61,7 @@ func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, ite
 			menuItems[i] = item.String()
 		}
 		fmt.Println(prompt)
+		// TODO: Use colors to provide contrast between rows
 		for i, mItem := range menuItems {
 			fmt.Printf("% 3d. %s\n", i+1, mItem)
 		}
@@ -67,13 +71,13 @@ func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, ite
 		idx, err = strconv.Atoi(scanner.Text())
 		if err != nil {
 			idx = -1
-			fmt.Println("Invalid choice")
+			color.Red("Invalid choice")
 			continue
 		}
 		idx--
 		if idx < 0 || idx >= len(items) {
 			idx = -1
-			fmt.Println("Invalid Choice")
+			color.Red("Invalid Choice")
 		}
 	}
 	return idx

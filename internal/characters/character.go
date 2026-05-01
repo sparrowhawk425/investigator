@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/sparrowhawk425/investigators/internal/config"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/nameapi"
 )
@@ -50,14 +51,24 @@ func (n name) Equals(other name) bool {
 	return n.first == other.first && n.last == other.last
 }
 
+type CriminalPostCard []string
+
+func (pc CriminalPostCard) Print() {
+	fmt.Println("Post Card:")
+	for _, line := range pc {
+		fmt.Println(line)
+	}
+	fmt.Println("")
+}
+
 type Character struct {
-	name    name
+	name
 	Traits  Characteristics
 	Address gameobjects.Location
 
-	Role     Role
-	Behavior Behavior
-	Goal     Goal
+	Role
+	Behavior
+	Goal
 
 	possessions gameobjects.Inventory
 
@@ -70,6 +81,8 @@ type Character struct {
 
 	reconCount    int
 	GetReconTimes func() int
+
+	postCards []CriminalPostCard
 }
 
 func (c Character) Equals(other Character) bool {
@@ -244,6 +257,18 @@ func (c *Character) ShouldRecon() bool {
 	return false
 }
 
+func (c Character) GetPostCards() []CriminalPostCard {
+	return c.postCards
+}
+
+func (c *Character) SetPostCards(postCards []CriminalPostCard) {
+	c.postCards = postCards
+}
+
+func (c *Character) AddPostCard(postCard CriminalPostCard) {
+	c.postCards = append(c.postCards, postCard)
+}
+
 func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 
 	goal := Goal{Target: 1500}
@@ -268,7 +293,7 @@ func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 				Date: apiChar.DateOfBirth.Date,
 				Age:  apiChar.DateOfBirth.Age,
 			},
-			Nationality: Nationality(apiChar.Nationality),
+			Nationality: config.CountryCode(apiChar.Nationality),
 			EyeColor:    eyeColor,
 			HairColor:   hairColor,
 			Gender:      gender,

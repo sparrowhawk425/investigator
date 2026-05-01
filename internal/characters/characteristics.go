@@ -1,6 +1,10 @@
 package characters
 
-import "time"
+import (
+	"time"
+
+	"github.com/sparrowhawk425/investigators/internal/config"
+)
 
 type Gender string
 
@@ -8,62 +12,25 @@ const (
 	MaleGender      Gender = "Male"
 	FemaleGender    Gender = "Female"
 	NonbinaryGender Gender = "Nonbinary"
-	UnknownGender   Gender = "Unknown"
 )
 
 var Genders = []Gender{
-	MaleGender, FemaleGender,
+	MaleGender, FemaleGender, NonbinaryGender,
 }
 
 func (g Gender) String() string {
 	return string(g)
 }
 
-type Nationality string
-
-const (
-	Australia          Nationality = "AU"
-	Brazil             Nationality = "BR"
-	Canada             Nationality = "CA"
-	Switzerland        Nationality = "CH"
-	Germany            Nationality = "DE"
-	Denmark            Nationality = "DK"
-	Spain              Nationality = "ES"
-	Finland            Nationality = "FI"
-	France             Nationality = "FR"
-	GreatBritain       Nationality = "GB"
-	Ireland            Nationality = "IE"
-	India              Nationality = "IN"
-	Mexico             Nationality = "MX"
-	Netherlands        Nationality = "NL"
-	Norway             Nationality = "NO"
-	NewZealand         Nationality = "NZ"
-	Serbia             Nationality = "RS"
-	Türkiye            Nationality = "TR"
-	Ukraine            Nationality = "UA"
-	UnitedStates       Nationality = "US"
-	UnknownNationality Nationality = "XX"
-)
-
-var Nationalities = []Nationality{
-	Australia, Brazil, Canada, Switzerland, Germany, Denmark, Spain, Finland, GreatBritain,
-	Ireland, India, Mexico, Netherlands, Norway, NewZealand, Serbia, Türkiye, Ukraine, UnitedStates,
-}
-
-func (n Nationality) String() string {
-	return string(n)
-}
-
 type EyeColor string
 
 const (
-	BlueEyes    EyeColor = "Blue"
-	GreenEyes   EyeColor = "Green"
-	BrownEyes   EyeColor = "Brown"
-	AmberEyes   EyeColor = "Amber"
-	HazelEyes   EyeColor = "Hazel"
-	GrayEyes    EyeColor = "Gray"
-	UnknownEyes EyeColor = "Unknown"
+	BlueEyes  EyeColor = "Blue"
+	GreenEyes EyeColor = "Green"
+	BrownEyes EyeColor = "Brown"
+	AmberEyes EyeColor = "Amber"
+	HazelEyes EyeColor = "Hazel"
+	GrayEyes  EyeColor = "Gray"
 	// Red/Violet (due to albinism)?
 	// Heterochromia?
 )
@@ -79,16 +46,15 @@ func (ec EyeColor) String() string {
 type HairColor string
 
 const (
-	BlondHair        HairColor = "Blond"
-	DarkBlondHair    HairColor = "Dark Blond"
-	MediumBrownHair  HairColor = "Medium Brown"
-	DarkBrownHair    HairColor = "Dark Brown"
-	BlackHair        HairColor = "Black"
-	AuburnHair       HairColor = "Auburn"
-	RedHair          HairColor = "Red"
-	GrayHair         HairColor = "Gray"
-	WhiteHair        HairColor = "White"
-	UnknownHairColor HairColor = "Unknown"
+	BlondHair       HairColor = "Blond"
+	DarkBlondHair   HairColor = "Dark Blond"
+	MediumBrownHair HairColor = "Medium Brown"
+	DarkBrownHair   HairColor = "Dark Brown"
+	BlackHair       HairColor = "Black"
+	AuburnHair      HairColor = "Auburn"
+	RedHair         HairColor = "Red"
+	GrayHair        HairColor = "Gray"
+	WhiteHair       HairColor = "White"
 )
 
 var HairColors = []HairColor{
@@ -102,11 +68,10 @@ func (hc HairColor) String() string {
 type HairLength string
 
 const (
-	BaldHair          HairLength = "Bald"
-	ShortHair         HairLength = "Short"
-	MediumHair        HairLength = "Medium"
-	LongHair          HairLength = "Long"
-	UnknownHairLength HairLength = "Unknown"
+	BaldHair   HairLength = "Bald"
+	ShortHair  HairLength = "Short"
+	MediumHair HairLength = "Medium"
+	LongHair   HairLength = "Long"
 )
 
 var HairLengths = []HairLength{
@@ -120,10 +85,9 @@ func (hl HairLength) String() string {
 type ShoeSize string
 
 const (
-	SmallShoe   ShoeSize = "Small"
-	MediumShoe  ShoeSize = "Medium"
-	LargeShoe   ShoeSize = "Large"
-	UnknownShoe ShoeSize = "Unknown"
+	SmallShoe  ShoeSize = "Small"
+	MediumShoe ShoeSize = "Medium"
+	LargeShoe  ShoeSize = "Large"
 )
 
 var ShoeSizes = []ShoeSize{
@@ -140,7 +104,6 @@ const (
 	ShortHeight   Height = "Short"
 	AverageHeight Height = "Average"
 	TallHeight    Height = "Tall"
-	UnknownHeight Height = "Unknown"
 )
 
 var Heights = []Height{
@@ -157,7 +120,6 @@ const (
 	ThinWeight    Weight = "Thin"
 	AverageWeight Weight = "Average"
 	OverWeight    Weight = "Heavy"
-	UnknownWeight Weight = "Unknown"
 )
 
 var Weights = []Weight{
@@ -175,7 +137,7 @@ type DateOfBirth struct {
 
 type Characteristics struct {
 	Dob         DateOfBirth
-	Nationality Nationality
+	Nationality config.CountryCode
 	Gender      Gender
 	EyeColor    EyeColor
 	HairColor   HairColor

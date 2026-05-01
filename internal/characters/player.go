@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 
+	"github.com/sparrowhawk425/investigators/internal/config"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
@@ -23,7 +24,18 @@ type Player struct {
 	Action          *Action
 }
 
-const unknown = "Unknown"
+// Unknowns
+const (
+	unknown                               = "Unknown"
+	UnknownGender      Gender             = "Unknown"
+	UnknownNationality config.CountryCode = "XX"
+	UnknownEyes        EyeColor           = "Unknown"
+	UnknownHairColor   HairColor          = "Unknown"
+	UnknownHairLength  HairLength         = "Unknown"
+	UnknownShoe        ShoeSize           = "Unknown"
+	UnknownHeight      Height             = "Unknown"
+	UnknownWeight      Weight             = "Unknown"
+)
 
 func (p *Player) CreateDossier(scanner *bufio.Scanner) *Dossier {
 	fmt.Print("Choose a name for this Dossier > ")

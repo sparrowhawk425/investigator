@@ -1,7 +1,8 @@
 package characters
 
 import (
-	"github.com/sparrowhawk425/investigators/internal/functions"
+	"slices"
+
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
@@ -16,6 +17,7 @@ type Role struct {
 	Solitary        bool
 	Freelancer      bool
 	JobLocation     *gameobjects.Location
+	Boss            *Character
 
 	RoleAction Action
 	IdleAction Action
@@ -32,12 +34,12 @@ var CriminalRoles = []Role{
 // TODO: Can we avoid the checks for 0 valid targets?
 func (r Role) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
 	return func(locations []gameobjects.Location) *gameobjects.Location {
-		targets := functions.Filter(locations, gameobjects.FilterLocationsByType(r.targetLocations))
-		if len(targets) == 0 {
-			targets = functions.Filter(locations, gameobjects.FilterLocationsByLootType(r.preferredLoot))
-		}
-		if len(targets) == 0 {
-			targets = locations
+		targets := []gameobjects.Location{}
+		for _, loc := range locations {
+			targets = append(targets, loc)
+			if slices.ContainsFunc(r.targetLocations, func(target gameobjects.LocationType) bool { return loc.Type == target }) {
+				targets = append(targets, loc)
+			}
 		}
 		return findTarget(targets)
 	}
@@ -178,3 +180,9 @@ func CreateVandal() Role {
 // Hitman
 // Cleaner
 // Ghost?
+
+func CreateCapo() Role {
+	return Role{
+		Name: "Capo",
+	}
+}

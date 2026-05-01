@@ -5,6 +5,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
@@ -24,7 +25,6 @@ type cliCommand struct {
 /*
 TODO: Need profile command (something to help in between crimes)
 Monty Hall game? Remove one option from a criminal: does not have green eyes. What does the player actually do here?
-Trivia game: Gather data for each map and have players answer questions. Success somehow earns facts about targets? Maybe this is the reward for capturing and leads to the next part?
 */
 func GetCommandMap() map[string]cliCommand {
 	commandMap := map[string]cliCommand{
@@ -87,6 +87,12 @@ func GetCommandMap() map[string]cliCommand {
 			description:  "Arrest a person at your current location",
 			advancesTime: false,
 			Callback:     commandArrestCharacter,
+		},
+		"postcards": {
+			name:         "postcards",
+			description:  "View any postcards you have collected",
+			advancesTime: false,
+			Callback:     commandPostCards,
 		},
 		// "talk": {
 		// 	name:         "talk",
@@ -199,7 +205,9 @@ func commandCreateBolo(gs *gamelogic.GameState, params []string) (bool, error) {
 		}
 	}
 	idx := gamelogic.MenuSelect(gs.Scanner, "Who do you want to create a BOLO for?", lo.Map(gs.People, func(c characters.Character, _ int) string { return c.GetName() }))
+
 	gs.Bolos = append(gs.Bolos, gs.People[idx])
+	color.Yellow("BOLO created for %s", gs.People[idx].GetName())
 	return false, nil
 }
 
@@ -216,6 +224,32 @@ func commandArrestCharacter(gs *gamelogic.GameState, _ []string) (bool, error) {
 	idx := gamelogic.MenuSelect(gs.Scanner, "Who do you want to arrest?", lo.Map(gs.Player.CurrentLocation.Visitors, func(c gameobjects.Person, _ int) string { return c.GetName() }))
 	target := gs.Player.CurrentLocation.Visitors[idx].(characters.Character)
 	gs.ArrestCriminal(target)
+	return false, nil
+}
+
+func commandPostCards(gs *gamelogic.GameState, _ []string) (bool, error) {
+
+	if len(gs.Player.GetPostCards()) == 0 {
+		fmt.Println("You haven't collected any post cards")
+		return false, nil
+	}
+	options := []string{}
+	for _, c := range gs.Caught {
+		options = append(options, c.GetName())
+	}
+	options = append(options, "Done")
+	for {
+		idx := gamelogic.MenuSelect(gs.Scanner, "Whose post cards do you wish to see?", options)
+		if idx == len(options)-1 {
+			break
+		}
+		fmt.Printf("Viewing Post Cards found at the hideout of %s\n", gs.Caught[idx].GetName())
+		startIdx := 3 * idx
+		for i := 3 * idx; i < startIdx+3; i++ {
+			gs.Player.GetPostCards()[i].Print()
+		}
+	}
+
 	return false, nil
 }
 
