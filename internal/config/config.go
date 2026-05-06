@@ -98,6 +98,10 @@ var Countries = []Country{
 	{Name: SerbiaName, Code: SerbiaCode}, {Name: TürkiyeName, Code: TürkiyeCode}, {Name: UkraineName, Code: UkraineCode}, {Name: UnitedStatesName, Code: UnitedStatesCode},
 }
 
+func (c Country) Equals(other Country) bool {
+	return c.Name == other.Name
+}
+
 func (c Country) GetName() CountryName {
 	return c.Name
 }
@@ -135,6 +139,7 @@ type Config struct {
 	Difficulty
 	PostCards
 
+	Scanner    *bufio.Scanner
 	Level      int
 	PlayerName string
 	Countries  []Country

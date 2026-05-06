@@ -3,8 +3,6 @@ package gamelogic
 import (
 	"bufio"
 	"fmt"
-	"log"
-	"math/rand/v2"
 	"slices"
 
 	"github.com/fatih/color"
@@ -12,8 +10,8 @@ import (
 
 	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/config"
+	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
-	"github.com/sparrowhawk425/investigators/internal/nameapi"
 	"github.com/sparrowhawk425/investigators/internal/times"
 )
 
@@ -23,6 +21,7 @@ type GameState struct {
 	WeekDay     times.DayOfTheWeek
 	TimeOfDay   times.TimeOfDay
 	Player      characters.Player
+	Country     config.Country
 	Bosses      []characters.Character
 	Places      []gameobjects.Location
 	CrimePlaces []gameobjects.Location
@@ -53,118 +52,6 @@ func (gs GameState) GetDayOfTheWeek() times.DayOfTheWeek {
 func (gs *GameState) NextDay() {
 	gs.DayNumber++
 	gs.WeekDay = gs.WeekDay.NextDay()
-}
-
-func (gs *GameState) BuildGame(cfg *config.Config) {
-
-	// Select country
-	countryNames := lo.Map(cfg.Countries, func(c config.Country, i int) string { return c.GetName().String() })
-	idx := MenuSelect(gs.Scanner, "Select a Country to begin your investigation:", countryNames)
-	country := cfg.Countries[idx]
-	color.Green("Travelling to %s...", country.GetName())
-
-	gs.Bosses = createBosses(cfg.GetNumBosses(), slices.DeleteFunc(cfg.Countries, func(c config.Country) bool { return c.Name == country.Name }))
-	// Add locations and people to game
-	results, err := nameapi.MakeHTTPGetRequest(country, cfg.GetNumPlaces())
-	if err != nil {
-		log.Fatalf("Error getting locations from API: %v", err)
-	}
-	half := len(results) / 2
-	locationResults := results[:half]
-	peopleResults := results[half:]
-
-	// Create locations
-	numCrimeLocs := len(gameobjects.CrimeLocations) * 2
-	crimeLocations := locationResults[:numCrimeLocs]
-	for i, apiLoc := range crimeLocations {
-		gs.CrimePlaces = append(gs.CrimePlaces, gameobjects.CreateLocation(apiLoc.Location, gameobjects.CrimeLocations[i%len(gameobjects.CrimeLocations)], true))
-	}
-	apiLocations := lo.Map(locationResults[numCrimeLocs:], func(character nameapi.Character, i int) nameapi.Location { return character.Location })
-	gs.Places = gameobjects.CreateRandomLocations(apiLocations)
-
-	// Create people
-	bossIdx := 0
-	for i := range peopleResults {
-		if i < cfg.GetNumCriminals() {
-			c := characters.CreateRandomCharacter(peopleResults[i], characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))])
-			c.Boss = &gs.Bosses[bossIdx%len(gs.Bosses)]
-			countryCode := c.Boss.Traits.Nationality
-			addPostCards(cfg, countryCode, &c)
-			bossIdx++
-			gs.People = append(gs.People, c)
-			gs.Criminals = append(gs.Criminals, &c)
-		} else {
-			c := characters.CreateRandomCharacter(peopleResults[i], characters.RegularRoles[rand.IntN(len(characters.RegularRoles))])
-			c.SetJobLocation(c.FindTarget(gs.Places))
-			gs.People = append(gs.People, c)
-		}
-	}
-
-	// Add residences
-	for i := range gs.People {
-		gs.Places = append(gs.Places, gs.People[i].Address)
-	}
-	// Sort lists
-	slices.SortFunc(gs.Places, func(l1, l2 gameobjects.Location) int {
-		if l1.Address.Number < l2.Address.Number {
-			return -1
-		} else if l1.Address.Number > l2.Address.Number {
-			return 1
-		}
-		if l1.Address.Name < l2.Address.Name {
-			return -1
-		} else if l1.Address.Name > l2.Address.Name {
-			return 1
-		}
-		return 0
-	})
-	slices.SortFunc(gs.People, func(p1, p2 characters.Character) int {
-		if p1.GetFirstName() < p2.GetFirstName() {
-			return -1
-		} else if p1.GetFirstName() > p2.GetFirstName() {
-			return 1
-		}
-		if p1.GetLastName() < p2.GetLastName() {
-			return -1
-		} else if p1.GetLastName() > p2.GetLastName() {
-			return 1
-		}
-		return 0
-	})
-}
-
-// Create bosses from a different country that the local members will report to
-func createBosses(numBosses int, countries []config.Country) []characters.Character {
-	bosses := make([]characters.Character, numBosses)
-	for i := range numBosses {
-		char, err := nameapi.MakeHTTPGetRequest(countries[rand.IntN(len(countries))], 1)
-		if err != nil {
-			log.Fatalf("Error getting locations from API: %v", err)
-		}
-		bosses[i] = characters.CreateRandomCharacter(char[0], characters.CreateCapo())
-	}
-	return bosses
-}
-
-func addPostCards(cfg *config.Config, countryCode config.CountryCode, person *characters.Character) {
-	criminalCards := []characters.CriminalPostCard{}
-
-	card := cfg.PostCards.Get(countryCode)
-	criminalCards = append(criminalCards, card.Image)
-	otherCountries := slices.DeleteFunc(cfg.Countries, func(c config.Country) bool { return c.GetCode() == countryCode })
-	for range 2 {
-		postCard := cfg.PostCards.Get(otherCountries[rand.IntN(len(otherCountries))].GetCode())
-		criminalCards = append(criminalCards, postCard.Image)
-	}
-	slices.SortFunc(criminalCards, func(c1, c2 characters.CriminalPostCard) int {
-		if c1[0] < c2[0] {
-			return -1
-		} else if c1[0] > c2[0] {
-			return 1
-		}
-		return 0
-	})
-	person.SetPostCards(criminalCards)
 }
 
 func (gs GameState) GetLocations() []gameobjects.Location {
@@ -260,10 +147,19 @@ func (gs *GameState) ArrestCriminal(target characters.Character) {
 		}
 		fmt.Print("Continue...")
 		gs.Scanner.Scan()
-		color.Green("Searching their hideout, you find 3 postcards:")
-		for _, card := range target.GetPostCards() {
-			card.Print()
-			gs.Player.AddPostCard(card)
+		if len(target.GetPostCards()) > 0 {
+			color.Green("Searching their hideout, you find 3 postcards:")
+			fmt.Print("Do you want to view them? (yes/no) >")
+			gs.Scanner.Scan()
+			input := functions.CleanInput(gs.Scanner.Text())
+			showCards := len(input) > 0 && input[0] == "y" || input[0] == "yes"
+			for _, card := range target.GetPostCards() {
+				if showCards {
+					card.Print()
+				}
+				gs.Player.AddPostCard(card)
+			}
+			color.Green("You stash the postcards to review at your leisure")
 		}
 	} else {
 		fmt.Printf("Unfortunately, %s is not a member of the Syndicate\n", target.GetName())
