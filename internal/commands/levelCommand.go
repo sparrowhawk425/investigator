@@ -84,7 +84,8 @@ func commandLevelStats(gs *gamelogic.GameState, _ []string) (bool, error) {
 
 	fmt.Printf("%s Stats:\n", gs.Country.GetName())
 	fmt.Printf("  Days: %d\n", gs.DayNumber)
-	fmt.Printf("  Caught: %d\n", len(gs.Caught))
 	fmt.Printf("  Escaped: %d\n", len(gs.Escaped))
+	fmt.Printf("  Caught: %d\n", len(gs.Caught))
+	functions.PrintFormattedList(gs.Caught)
 	return false, nil
 }

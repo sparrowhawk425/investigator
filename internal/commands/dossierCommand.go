@@ -91,7 +91,7 @@ func commandDossiers(gs *gamelogic.GameState, _ []string) (bool, error) {
 				break
 			}
 		} else {
-			fmt.Println("Unknown command")
+			color.Red("Unknown command")
 		}
 	}
 	return false, nil
@@ -120,7 +120,7 @@ func commandDossierCreate(gs *gamelogic.GameState, _ []string) (bool, error) {
 func commandDossierView(gs *gamelogic.GameState, params []string) (bool, error) {
 
 	if len(gs.Player.Dossiers) == 0 {
-		fmt.Println("No Dossiers to view")
+		color.Red("No Dossiers to view")
 		return false, nil
 	}
 	idx := getDossierIndex(gs, params)
@@ -138,7 +138,7 @@ func commandDossierUpdate(gs *gamelogic.GameState, params []string) (bool, error
 	}
 	idx := getDossierIndex(gs, params)
 	if idx == -1 {
-		fmt.Println("No dossier with that name exists")
+		color.Red("No dossier with that name exists")
 		return false, nil
 	}
 	updateDossier(gs.Scanner, &gs.Player.Dossiers[idx])
@@ -148,12 +148,12 @@ func commandDossierUpdate(gs *gamelogic.GameState, params []string) (bool, error
 
 func commandDossierDelete(gs *gamelogic.GameState, params []string) (bool, error) {
 	if len(gs.Player.Dossiers) == 0 {
-		fmt.Println("No Dossiers to delete")
+		color.Red("No Dossiers to delete")
 		return false, nil
 	}
 	idx := getDossierIndex(gs, params)
 	if idx == -1 {
-		fmt.Println("No Dossier with that name exists")
+		color.Red("No Dossier with that name exists")
 		return false, nil
 	}
 	gs.Player.Dossiers = slices.Delete(gs.Player.Dossiers, idx, idx)
@@ -163,6 +163,10 @@ func commandDossierDelete(gs *gamelogic.GameState, params []string) (bool, error
 func commandDossierMatch(gs *gamelogic.GameState, params []string) (bool, error) {
 
 	idx := getDossierIndex(gs, params)
+	if idx == -1 {
+		color.Red("No Dossier with that name exists")
+		return false, nil
+	}
 	dossier := gs.Player.Dossiers[idx]
 	matches := []characters.Character{}
 	traits := dossier.Target.Traits

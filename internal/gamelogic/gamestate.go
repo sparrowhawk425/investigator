@@ -139,30 +139,31 @@ func matchCriminalFunc(person *characters.Character) func(*characters.Character)
 func (gs *GameState) ArrestCriminal(target characters.Character) {
 
 	fmt.Printf("Arresting %s...\n", target.GetName())
-	if slices.ContainsFunc(gs.Criminals, matchCriminalFunc(&target)) {
-		gs.RemoveCriminal("You have successfully identified and arrested a member of the Syndicate. Well done.", target, true)
-		// Remove criminal from the list of active BOLOs
-		if slices.ContainsFunc(gs.Bolos, target.Equals) {
-			gs.Bolos = slices.DeleteFunc(gs.Bolos, target.Equals)
-		}
-		fmt.Print("Continue...")
-		gs.Scanner.Scan()
-		if len(target.GetPostCards()) > 0 {
-			color.Green("Searching their hideout, you find 3 postcards:")
-			fmt.Print("Do you want to view them? (yes/no) >")
-			gs.Scanner.Scan()
-			input := functions.CleanInput(gs.Scanner.Text())
-			showCards := len(input) > 0 && input[0] == "y" || input[0] == "yes"
-			for _, card := range target.GetPostCards() {
-				if showCards {
-					card.Print()
-				}
-				gs.Player.AddPostCard(card)
-			}
-			color.Green("You stash the postcards to review at your leisure")
-		}
-	} else {
+	if !slices.ContainsFunc(gs.Criminals, matchCriminalFunc(&target)) {
 		fmt.Printf("Unfortunately, %s is not a member of the Syndicate\n", target.GetName())
+		return
+	}
+
+	gs.RemoveCriminal("You have successfully identified and arrested a member of the Syndicate. Well done.", target, true)
+	// Remove criminal from the list of active BOLOs
+	if slices.ContainsFunc(gs.Bolos, target.Equals) {
+		gs.Bolos = slices.DeleteFunc(gs.Bolos, target.Equals)
+	}
+	fmt.Print("Continue...")
+	gs.Scanner.Scan()
+	if len(target.GetPostCards()) > 0 {
+		color.Green("Searching their hideout, you find 3 postcards:")
+		fmt.Print("Do you want to view them? (yes/no) > ")
+		gs.Scanner.Scan()
+		input := functions.CleanInput(gs.Scanner.Text())
+		showCards := len(input) > 0 && input[0] == "y" || input[0] == "yes"
+		for _, card := range target.GetPostCards() {
+			if showCards {
+				card.Print()
+			}
+			gs.Player.AddPostCard(card)
+		}
+		color.Green("You stash the postcards to review at your leisure")
 	}
 }
 
@@ -215,7 +216,11 @@ func (gs *GameState) Update() {
 	}
 	if gs.Player.CurrentLocation != nil {
 		fmt.Printf("%s is currently at:\n", gs.Player.Name)
-		gs.Player.CurrentLocation.Print()
+		gs.Player.CurrentLocation.Print(color.New(color.FgWhite).PrintfFunc())
+		clues := gs.Player.CurrentLocation.GetClues()
+		if len(clues) > 0 {
+			gs.Player.AddClues(*gs.Player.CurrentLocation, clues)
+		}
 	}
 	// Criminals escape at the end of the sequence
 	for _, escapee := range gs.Escaping {

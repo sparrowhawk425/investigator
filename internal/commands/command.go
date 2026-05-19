@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/samber/lo"
 	"github.com/sparrowhawk425/investigators/internal/characters"
+	"github.com/sparrowhawk425/investigators/internal/functions"
 	"github.com/sparrowhawk425/investigators/internal/gamelogic"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
@@ -58,6 +59,18 @@ func GetCommandMap() map[string]cliCommand {
 			advancesTime: false,
 			Callback:     commandCrimes,
 		},
+		"clues": {
+			name:         "clues",
+			description:  "List the clues you have stored",
+			advancesTime: false,
+			Callback:     commandClues,
+		},
+		"caught": {
+			name:         "caught",
+			description:  "List details of criminals you have caught",
+			advancesTime: false,
+			Callback:     commandCaught,
+		},
 		"dossiers": {
 			name:         "dossiers",
 			description:  "View your dossiers",
@@ -100,12 +113,12 @@ func GetCommandMap() map[string]cliCommand {
 		// 	advancesTime: false,
 		// 	Callback:     commandConverse,
 		// },
-		// "enemies": {
-		// 	name:         "enemies",
-		// 	description:  "View info about enemies",
-		// 	advancesTime: false,
-		// 	Callback:     commandDebugEnemies,
-		// },
+		"enemies": {
+			name:         "enemies",
+			description:  "View info about enemies",
+			advancesTime: false,
+			Callback:     commandDebugEnemies,
+		},
 	}
 	return commandMap
 }
@@ -151,24 +164,38 @@ func commandLocations(gs *gamelogic.GameState, params []string) (bool, error) {
 		}
 		locations = gs.GetLocationsByType(locTypes)
 	}
-	for _, loc := range locations {
-		loc.Print()
-	}
+	functions.PrintList(locations)
 	return false, nil
 }
 
 func commandPeople(gs *gamelogic.GameState, _ []string) (bool, error) {
-	for _, person := range gs.People {
-		person.Print()
-	}
+	functions.PrintList(gs.People)
 	return false, nil
 }
 
 func commandCrimes(gs *gamelogic.GameState, _ []string) (bool, error) {
 	fmt.Println("Reported Crimes:")
-	for _, crime := range gs.Crimes {
-		crime.Print()
+	functions.PrintList(gs.Crimes)
+	return false, nil
+}
+
+func commandClues(gs *gamelogic.GameState, _ []string) (bool, error) {
+	if len(gs.Player.Clues) == 0 {
+		color.Red("You haven't found any clues yet.")
+		return false, nil
 	}
+	fmt.Println("Clues:")
+	functions.PrintList(gs.Player.Clues)
+	return false, nil
+}
+
+func commandCaught(gs *gamelogic.GameState, _ []string) (bool, error) {
+	if len(gs.Caught) == 0 {
+		color.Red("You haven't caught any Syndicate members here yet.")
+		return false, nil
+	}
+	fmt.Println("Caught Syndicate Members:")
+	functions.PrintList(gs.Caught)
 	return false, nil
 }
 
@@ -257,8 +284,11 @@ func commandDebugEnemies(gs *gamelogic.GameState, _ []string) (bool, error) {
 	for _, criminal := range gs.Criminals {
 		idx := slices.IndexFunc(gs.People, func(p characters.Character) bool { return criminal.GetName() == p.GetName() })
 		c := gs.People[idx]
-		c.Print()
-		fmt.Printf("Goal: %d/%d\n", c.Goal.Progress, c.Goal.Target)
+		printFunc := color.New(color.FgWhite).PrintfFunc()
+		c.Print(printFunc)
+		//TODO: Why isn't this updating? The escape logic works, so why is this always 0?
+		printFunc("Goal: %d/%d\n", c.Goal.Progress, c.Goal.Target)
+		printFunc("Personality: %s\n", c.Behavior.Name)
 	}
 	return false, nil
 }

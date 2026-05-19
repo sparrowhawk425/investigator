@@ -138,6 +138,14 @@ func CreateEscapeAction() Action {
 	}
 }
 
+func CreateCapoAction() Action {
+	return Action{
+		Name: "Bossing",
+		Risk: 30,
+		Act:  CapoAction,
+	}
+}
+
 // Perform Actions
 
 func SleepAction(gs GameStateI, person *Character) {
@@ -228,11 +236,15 @@ func RobAction(gs GameStateI, person *Character) {
 }
 
 func VandalizeAction(gs GameStateI, person *Character) {
-
+	// TODO: Vandal action?
 }
 
 func EscapeAction(gs GameStateI, person *Character) {
 	gs.SetCriminalEscaping(*person)
+}
+
+func CapoAction(gs GameStateI, person *Character) {
+	// TODO: Capo action?
 }
 
 // Helpers

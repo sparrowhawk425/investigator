@@ -3,7 +3,9 @@ package characters
 import (
 	"bufio"
 	"fmt"
+	"slices"
 
+	"github.com/fatih/color"
 	"github.com/sparrowhawk425/investigators/internal/config"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
@@ -15,13 +17,32 @@ type Dossier struct {
 	Notes   []string
 }
 
+type LocationClue struct {
+	Location gameobjects.Location
+	Clue     string
+}
+
+func (lc LocationClue) Print(printFunc func(string, ...any)) {
+	printFunc("At: %s\n - %s\n", lc.Location.Address, lc.Clue)
+}
+
 type Player struct {
 	Character
 
 	Name            string
 	CurrentLocation *gameobjects.Location
 	Dossiers        []Dossier
+	Clues           []LocationClue
 	Action          *Action
+}
+
+func (p *Player) AddClues(location gameobjects.Location, clues []string) {
+	for _, clue := range clues {
+		if !slices.ContainsFunc(p.Clues, func(lc LocationClue) bool { return lc.Location.Equals(location) && lc.Clue == clue }) {
+			p.Clues = append(p.Clues, LocationClue{Location: location, Clue: clue})
+			color.Green("A new clue has been added to your notes.")
+		}
+	}
 }
 
 // Unknowns

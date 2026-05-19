@@ -30,10 +30,11 @@ type Level struct {
 func SelectLevel(cfg *config.Config) config.Country {
 	// Select country
 	countryNames := lo.Map(cfg.Countries, func(c config.Country, i int) string { return c.GetName().String() })
-	idx := gamelogic.MenuSelect(cfg.Scanner, "Select a Country to begin your investigation:", countryNames)
+	idx := gamelogic.MenuSelect(cfg.Scanner, "Select a Country to begin your next investigation:", countryNames)
 	return cfg.Countries[idx]
 }
 
+// TODO: Look at this for updates to CLI: https://medium.com/@nexidian/writing-an-interactive-cli-menu-in-golang-d6438b175fb6
 func PlayLevel(country config.Country, bosses []characters.Character, cfg *config.Config) Level {
 
 	// Build the game
@@ -48,9 +49,12 @@ func PlayLevel(country config.Country, bosses []characters.Character, cfg *confi
 		gs.PrintDay()
 
 		// Get player input
-		fmt.Print("What do you wish to do? > ")
-		gs.Scanner.Scan()
-		cleanText := functions.CleanInput(gs.Scanner.Text())
+		var cleanText []string
+		for len(cleanText) == 0 {
+			fmt.Print("What do you wish to do? > ")
+			gs.Scanner.Scan()
+			cleanText = functions.CleanInput(gs.Scanner.Text())
+		}
 
 		// Run command
 		update := false
@@ -90,7 +94,7 @@ func BuildLevel(country config.Country, bosses []characters.Character, cfg *conf
 	gs.Player.Name = cfg.PlayerName
 
 	// Handle bosses (including bosses from a previous level)
-	gs.Bosses = createBosses(cfg.GetNumBosses(), slices.DeleteFunc(cfg.Countries, func(c config.Country) bool { return c.Name == country.Name }))
+	gs.Bosses = createBosses(cfg.GetNumBosses(), functions.DeleteFromSliceFunc(cfg.Countries, func(c config.Country) bool { return c.Name == country.Name }))
 	localBossIdx := slices.IndexFunc(bosses, func(c characters.Character) bool { return c.Traits.Nationality == country.GetCode() })
 	if localBossIdx != -1 {
 		color.Green("You have successfully tracked a Syndicate boss to their home base.")
@@ -122,8 +126,8 @@ func BuildLevel(country config.Country, bosses []characters.Character, cfg *conf
 		if i < cfg.GetNumCriminals() {
 			c := characters.CreateRandomCharacter(peopleResults[i], characters.CriminalRoles[rand.IntN(len(characters.CriminalRoles))])
 			c.Boss = &gs.Bosses[bossIdx%len(gs.Bosses)]
-			fmt.Printf("Boss: %s, Nationality: %s\n", c.Boss.GetName(), c.Boss.Traits.Nationality)
 			countryCode := c.Boss.Traits.Nationality
+
 			addPostCards(cfg, countryCode, &c)
 			bossIdx++
 			gs.People = append(gs.People, c)
@@ -185,12 +189,22 @@ func createBosses(numBosses int, countries []config.Country) []characters.Charac
 func addPostCards(cfg *config.Config, countryCode config.CountryCode, person *characters.Character) {
 	criminalCards := []characters.CriminalPostCard{}
 
-	card := cfg.PostCards.Get(countryCode)
+	card, err := cfg.PostCards.Get(countryCode)
+	if err != nil {
+		cfg.Logger.Error("error getting post card", "error", err)
+	}
 	criminalCards = append(criminalCards, card.Image)
-	otherCountries := slices.DeleteFunc(cfg.Countries, func(c config.Country) bool { return c.GetCode() == countryCode })
+	otherCountries := functions.DeleteFromSliceFunc(cfg.Countries, func(c config.Country) bool { return c.GetCode() == countryCode })
 	for range 2 {
-		postCard := cfg.PostCards.Get(otherCountries[rand.IntN(len(otherCountries))].GetCode())
+		countryIdx := rand.IntN(len(otherCountries))
+		country := otherCountries[countryIdx]
+		postCard, err := cfg.PostCards.Get(country.GetCode())
+		if err != nil {
+			cfg.Logger.Error("error getting post card", "error", err)
+		}
 		criminalCards = append(criminalCards, postCard.Image)
+		// Ensure each post card is unique
+		otherCountries = functions.DeleteFromSlice(otherCountries, countryIdx)
 	}
 	slices.SortFunc(criminalCards, func(c1, c2 characters.CriminalPostCard) int {
 		if c1[0] < c2[0] {

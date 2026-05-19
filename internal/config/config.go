@@ -2,10 +2,13 @@ package config
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
 	"slices"
+
+	pkgerr "github.com/pkg/errors"
 )
 
 type Difficulty int
@@ -127,18 +130,19 @@ type PostCard struct {
 
 type PostCards map[CountryCode]PostCard
 
-func (pc PostCards) Get(code CountryCode) PostCard {
+func (pc PostCards) Get(code CountryCode) (PostCard, error) {
 	card, ok := pc[code]
 	if !ok {
-		slog.Warn("Post Card not found", slog.String("countryName", code.String()))
+		return PostCard{}, pkgerr.WithStack(fmt.Errorf("Post Card not found for CountryCode %s\n", code))
 	}
-	return card
+	return card, nil
 }
 
 type Config struct {
 	Difficulty
 	PostCards
 
+	Logger     *slog.Logger
 	Scanner    *bufio.Scanner
 	Level      int
 	PlayerName string

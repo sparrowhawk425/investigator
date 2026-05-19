@@ -1,8 +1,6 @@
 package gamelogic
 
 import (
-	"fmt"
-
 	"github.com/sparrowhawk425/investigators/internal/characters"
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 	"github.com/sparrowhawk425/investigators/internal/times"
@@ -18,17 +16,17 @@ type Crime struct {
 	Witnesses  []characters.Character
 }
 
-func (c Crime) Print() {
-	fmt.Printf("Day: %d, Time: %s\n", c.Day, c.TimeOfDay.GetName())
-	fmt.Printf("%s at %s\n", c.Type, c.Location.GetAddress())
-	fmt.Println("Loot:")
+func (c Crime) Print(printFunc func(string, ...any)) {
+	printFunc("Day: %d, Time: %s\n", c.Day, c.TimeOfDay.GetName())
+	printFunc("%s at %s\n", c.Type, c.Location.GetAddress())
+	printFunc("Loot:\n")
 	for _, loot := range c.StolenLoot {
-		fmt.Printf(" - %s: %d\n", loot.Type, loot.Quantity)
+		printFunc(" - %s: %d\n", loot.Type, loot.Quantity)
 	}
 	if len(c.Witnesses) > 0 {
-		fmt.Println("Witnesses:")
+		printFunc("Witnesses:\n")
 		for _, w := range c.Witnesses {
-			fmt.Printf(" - %s\n", w.GetName())
+			printFunc(" - %s\n", w.GetName())
 		}
 	}
 }

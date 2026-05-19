@@ -89,6 +89,10 @@ func (c Character) Equals(other Character) bool {
 	return c.name.Equals(other.name) && c.Address.Equals(other.Address)
 }
 
+func (c Character) String() string {
+	return c.GetName()
+}
+
 func getLootAmount(maxAmount int) int {
 	return rand.IntN(maxAmount)
 }
@@ -130,20 +134,20 @@ func (c *Character) SetLastName(last string) {
 	c.name.last = last
 }
 
-func (c Character) Print() {
+func (c Character) Print(printFunc func(string, ...any)) {
 
-	fmt.Printf("%s\n", c.GetName())
-	fmt.Printf(" - Gender: %s\n", c.Traits.Gender)
-	fmt.Printf(" - Nationality: %s\n", c.Traits.Nationality)
-	fmt.Printf(" - Height: %s\n", c.Traits.Height)
-	fmt.Printf(" - Weight: %s\n", c.Traits.Weight)
-	fmt.Printf(" - Eye Color: %s\n", c.Traits.EyeColor)
-	fmt.Printf(" - Hair Color: %s\n", c.Traits.HairColor)
-	fmt.Printf(" - Hair Length: %s\n", c.Traits.HairLength)
-	fmt.Printf(" - Shoe Size: %s\n", c.Traits.ShoeSize)
-	fmt.Printf(" - Address: %d %s\n", c.Address.Address.Number, c.Address.Address.Name) // TODO: Instead of listing their address, make it easier to track a criminal (Need to make it possible to find criminals elsewhere)?
+	printFunc("%s\n", c.GetName())
+	printFunc(" - Gender: %s\n", c.Traits.Gender)
+	printFunc(" - Nationality: %s\n", c.Traits.Nationality)
+	printFunc(" - Height: %s\n", c.Traits.Height)
+	printFunc(" - Weight: %s\n", c.Traits.Weight)
+	printFunc(" - Eye Color: %s\n", c.Traits.EyeColor)
+	printFunc(" - Hair Color: %s\n", c.Traits.HairColor)
+	printFunc(" - Hair Length: %s\n", c.Traits.HairLength)
+	printFunc(" - Shoe Size: %s\n", c.Traits.ShoeSize)
+	printFunc(" - Address: %d %s\n", c.Address.Address.Number, c.Address.Address.Name) // TODO: Instead of listing their address, make it easier to track a criminal (Need to make it possible to find criminals elsewhere)?
 
-	fmt.Println("")
+	printFunc("")
 }
 
 func (c Character) GetPreferredLoot() []gameobjects.LootType {

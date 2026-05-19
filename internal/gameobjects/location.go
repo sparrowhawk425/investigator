@@ -149,32 +149,31 @@ func (loc Location) Equals(other Location) bool {
 	return true
 }
 
-func (loc Location) Print() {
+func (loc Location) Print(printFunc func(string, ...any)) {
 	fmt.Printf("%s\n", loc.GetAddress())
 
 	if len(loc.GetAvailableLoot()) == 0 {
-		fmt.Println("Notable Loot: None")
+		printFunc("Notable Loot: None\n")
 	} else {
-		fmt.Println("Notable Loot:")
+		printFunc("Notable Loot:\n")
 		for _, loot := range loc.inventory {
 			if loot.Quantity > 0 {
-				fmt.Printf(" - %s\n", loot.Type)
+				printFunc(" - %s\n", loot.Type)
 			}
 		}
 	}
 	if len(loc.Visitors) > 0 {
-		fmt.Println("People:")
+		printFunc("People:\n")
 		for _, person := range loc.Visitors {
-			fmt.Printf(" - %s\n", person.GetName())
+			printFunc(" - %s\n", person.GetName())
 		}
 	}
 	if len(loc.clues) > 0 {
-		fmt.Println("Clues:")
+		printFunc("Clues:\n")
 		for _, clue := range loc.clues {
-			fmt.Printf(" - %s\n", clue)
+			printFunc(" - %s\n", clue)
 		}
 	}
-	fmt.Println("")
 }
 
 func (loc Location) GetAddress() string {

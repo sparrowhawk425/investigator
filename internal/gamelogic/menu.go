@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/fatih/color"
+	"github.com/sparrowhawk425/investigators/internal/functions"
 )
 
 type ToString interface {
@@ -61,10 +62,8 @@ func CreateFilterableMenu[T ToString](scanner *bufio.Scanner, prompt string, ite
 			menuItems[i] = item.String()
 		}
 		fmt.Println(prompt)
-		// TODO: Use colors to provide contrast between rows
-		for i, mItem := range menuItems {
-			fmt.Printf("% 3d. %s\n", i+1, mItem)
-		}
+		functions.PrintFormattedList(items)
+
 		fmt.Print("Select an item > ")
 		scanner.Scan()
 		var err error
@@ -88,10 +87,9 @@ func MenuSelect(scanner *bufio.Scanner, msg string, items []string) int {
 	idx := -1
 	for idx < 0 {
 		fmt.Println(msg)
-		for i, item := range items {
-			fmt.Printf("% 3d. %s\n", i+1, item)
-		}
-		fmt.Print("Which number? > ")
+		functions.PrintFormattedList(items)
+
+		fmt.Print("Select an item > ")
 		scanner.Scan()
 		var err error
 		idx, err = strconv.Atoi(scanner.Text())

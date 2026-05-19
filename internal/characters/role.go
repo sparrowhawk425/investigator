@@ -183,6 +183,13 @@ func CreateVandal() Role {
 
 func CreateCapo() Role {
 	return Role{
-		Name: "Capo",
+		Name:          "Capo",
+		ActiveDuring:  times.Afternoon,
+		SleepDuring:   times.Night,
+		preferredLoot: []gameobjects.LootType{gameobjects.Money},
+		Solitary:      false,
+		Freelancer:    false,
+		RoleAction:    CreateCapoAction(),
+		IdleAction:    CreateLieLowAction(),
 	}
 }

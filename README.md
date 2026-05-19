@@ -16,7 +16,7 @@ investigators
 ```
 
 ## Playing the game
-The game generates fake people and place names from different countries around the world. After entering your name, you can select a country/region to investigate and it will generate people and places to investigate. The game uses a CLI to select actions. You can use `help` to see the available actions.
+The game generates people and place names from different countries around the world. After entering your name, you can select a country/region to investigate and it will create people and places to investigate. The game uses a CLI to select actions. You can use `help` to see the available actions.
 
 The goal is to find and arrest all of the Syndicate members before they achieve their goal and escape. To aid in their capture, new crimes are reported each day and you can investigate locations in hopes criminals left clues behind. Once you find something worth recording, you can create dossiers on the criminals you are hunting, helping you identify which character you are looking for.
 
