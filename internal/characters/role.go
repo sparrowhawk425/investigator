@@ -31,7 +31,7 @@ var CriminalRoles = []Role{
 	CreateBurglar(), CreateRobber(),
 }
 
-// TODO: Can we avoid the checks for 0 valid targets?
+// TODO: Can this still return 0 valid results?
 func (r Role) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
 	return func(locations []gameobjects.Location) *gameobjects.Location {
 		targets := []gameobjects.Location{}
@@ -183,9 +183,12 @@ func CreateVandal() Role {
 
 func CreateCapo() Role {
 	return Role{
-		Name:          "Capo",
-		ActiveDuring:  times.Afternoon,
-		SleepDuring:   times.Night,
+		Name:         "Capo",
+		ActiveDuring: times.Afternoon,
+		SleepDuring:  times.Night,
+		targetLocations: []gameobjects.LocationType{
+			gameobjects.Business, gameobjects.Casino, gameobjects.Restaurant,
+		},
 		preferredLoot: []gameobjects.LootType{gameobjects.Money},
 		Solitary:      false,
 		Freelancer:    false,

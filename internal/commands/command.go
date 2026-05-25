@@ -107,6 +107,12 @@ func GetCommandMap() map[string]cliCommand {
 			advancesTime: false,
 			Callback:     commandPostCards,
 		},
+		"status": {
+			name:         "status",
+			description:  "View progress information about your current investigation",
+			advancesTime: false,
+			Callback:     commandStatus,
+		},
 		// "talk": {
 		// 	name:         "talk",
 		// 	description:  "Converse with people at your current location",
@@ -275,6 +281,28 @@ func commandPostCards(gs *gamelogic.GameState, _ []string) (bool, error) {
 		for i := 3 * idx; i < startIdx+3; i++ {
 			gs.Player.GetPostCards()[i].Print()
 		}
+	}
+
+	return false, nil
+}
+
+func commandStatus(gs *gamelogic.GameState, _ []string) (bool, error) {
+
+	numActive := len(gs.Criminals)
+	numCaught := len(gs.Caught)
+	numEscaped := len(gs.Escaped)
+
+	color.Green("%s Investigation Status:", gs.Country.Name)
+	if numActive > 0 {
+		fmt.Printf(" - Active Syndicate Members: %d\n", numActive)
+	}
+	if numEscaped > 0 {
+		fmt.Printf(" - Syndicate Members Escaped: %d\n", numEscaped)
+	}
+	if numCaught > 0 {
+		fmt.Printf(" - Syndicate Members Caught: %d\n\n", numCaught)
+		fmt.Println(" Caught:")
+		functions.PrintList(gs.Caught)
 	}
 
 	return false, nil

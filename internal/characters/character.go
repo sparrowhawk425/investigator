@@ -2,6 +2,7 @@ package characters
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 	"slices"
 	"strings"
@@ -102,6 +103,10 @@ func getReconTimes() int {
 }
 
 func findTarget(locations []gameobjects.Location) *gameobjects.Location {
+	if len(locations) == 0 {
+		slog.Warn("No valid locations found for target")
+		return nil
+	}
 	return &locations[rand.IntN(len(locations))]
 }
 
@@ -312,7 +317,7 @@ func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 		Behavior:    behavior,
 		possessions: make(map[gameobjects.LootType]gameobjects.Loot),
 	}
-	// A little kludgy, but it does allow me to wrap the method in one place
+	// A little kludgy, but it does allow me to wrap the methods in one place
 	c.FindTarget = behavior.FindTarget(role.FindTarget(findTarget))
 	c.GetLootAmount = behavior.GetLootAmount(getLootAmount)
 	c.GetRisk = behavior.GetRiskPercent(c.getRisk)

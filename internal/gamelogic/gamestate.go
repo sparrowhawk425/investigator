@@ -189,10 +189,6 @@ func (gs *GameState) RemoveCriminal(msg string, person characters.Character, was
 	}
 }
 
-func (gs GameState) GetPostCards() {
-	// TODO: Pick three post cards to show
-}
-
 func (gs *GameState) Update() {
 
 	// Reset location visitors

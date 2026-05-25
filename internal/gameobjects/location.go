@@ -118,7 +118,7 @@ type Location struct {
 	IsOccupied bool
 	Visitors   []Person
 
-	quality   Quality
+	Quality   Quality
 	money     int
 	inventory Inventory
 	clues     []string
@@ -177,21 +177,21 @@ func (loc Location) Print(printFunc func(string, ...any)) {
 }
 
 func (loc Location) GetAddress() string {
-	desc := fmt.Sprintf("%s %s", loc.quality, loc.Type)
+	desc := fmt.Sprintf("%s %s", loc.Quality, loc.Type)
 	return fmt.Sprintf("%s: %d %s, %s, %s", desc, loc.Address.Number, loc.Address.Name, loc.City, loc.State)
 }
 
 func (loc Location) GetQuality() Quality {
-	return loc.quality
+	return loc.Quality
 }
 
 func (loc Location) GetQualityStr() string {
-	return loc.quality.String()
+	return loc.Quality.String()
 }
 
 func (loc Location) GetAdmissionPrice() int {
 	qual := 1
-	switch loc.quality {
+	switch loc.Quality {
 	case Moderate:
 		qual = 2
 	case Expensive:
@@ -283,7 +283,7 @@ func (loc Location) GetRiskPercent() int {
 	case Casino:
 		risk = 30
 	}
-	switch loc.quality {
+	switch loc.Quality {
 	case Moderate:
 		risk *= 2
 	case Expensive:
@@ -318,14 +318,14 @@ func FilterLocationsByLootType(lootTypes []LootType) func(Location, int) bool {
 
 func FilterLocationsByQuality(quality []Quality) func(Location, int) bool {
 	return func(loc Location, _ int) bool {
-		return slices.Contains(quality, loc.quality)
+		return slices.Contains(quality, loc.Quality)
 	}
 }
 
 // Helpers
 
 func CreateLocation(fromLoc nameapi.Location, locType LocationType, isOccupied bool) Location {
-	qual := Quality(rand.IntN(3))
+	qual := Quality(rand.IntN(len(QualityTypes)))
 	availableLoot := setAvailableLoot(locType, qual)
 	return Location{
 		Type: locType,
@@ -338,7 +338,7 @@ func CreateLocation(fromLoc nameapi.Location, locType LocationType, isOccupied b
 		Country:    fromLoc.Country,
 		PostCode:   parsePostCode(fromLoc.Postcode),
 		IsOccupied: isOccupied,
-		quality:    qual,
+		Quality:    qual,
 		inventory:  availableLoot,
 	}
 }

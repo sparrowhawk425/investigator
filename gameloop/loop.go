@@ -34,7 +34,7 @@ func SelectLevel(cfg *config.Config) config.Country {
 	return cfg.Countries[idx]
 }
 
-// TODO: Look at this for updates to CLI: https://medium.com/@nexidian/writing-an-interactive-cli-menu-in-golang-d6438b175fb6
+// TODO: Look at this for updates to CLI? https://medium.com/@nexidian/writing-an-interactive-cli-menu-in-golang-d6438b175fb6
 func PlayLevel(country config.Country, bosses []characters.Character, cfg *config.Config) Level {
 
 	// Build the game
@@ -97,7 +97,6 @@ func BuildLevel(country config.Country, bosses []characters.Character, cfg *conf
 	gs.Bosses = createBosses(cfg.GetNumBosses(), functions.DeleteFromSliceFunc(cfg.Countries, func(c config.Country) bool { return c.Name == country.Name }))
 	localBossIdx := slices.IndexFunc(bosses, func(c characters.Character) bool { return c.Traits.Nationality == country.GetCode() })
 	if localBossIdx != -1 {
-		color.Green("You have successfully tracked a Syndicate boss to their home base.")
 		gs.People = append(gs.People, bosses[localBossIdx])
 		gs.Criminals = append(gs.Criminals, &gs.People[len(gs.People)-1])
 		// TODO: Add a Mega boss postcard track?

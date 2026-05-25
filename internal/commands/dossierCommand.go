@@ -393,7 +393,7 @@ func updateNotes(scanner *bufio.Scanner, dossier *characters.Dossier) {
 			dossier.AddNote(scanner.Text())
 		case deleteNote: // TODO: delete doesn't work?
 			idx := gamelogic.MenuSelect(scanner, "Select note to delete:", dossier.Notes)
-			dossier.Notes = slices.Delete(dossier.Notes, idx, idx)
+			dossier.Notes = functions.DeleteFromSlice(dossier.Notes, idx)
 		}
 	}
 }
