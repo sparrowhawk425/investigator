@@ -17,7 +17,6 @@ type Dossier struct {
 	Notes   []string
 }
 
-// TODO: Incorporate Crime type in clue?
 type LocationClue struct {
 	Location gameobjects.Location
 	Clue     string

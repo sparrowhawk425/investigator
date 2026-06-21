@@ -68,7 +68,7 @@ type Character struct {
 	Address gameobjects.Location
 
 	Role
-	Behavior
+	Behaviors []Behaviors
 	Goal
 
 	possessions gameobjects.Inventory
@@ -283,7 +283,8 @@ func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 	goal := Goal{Target: 1500}
 	eyeColor := EyeColors[rand.IntN(len(EyeColors))]
 	hairColor := HairColors[rand.IntN(len(HairColors))]
-	behavior := RegularBehaviors[rand.IntN(len(RegularBehaviors))]
+	behaviors := []Behaviors{}
+	behaviors = append(behaviors, RegularBehaviors[rand.IntN(len(RegularBehaviors))])
 	gender := Gender(strings.ToUpper(apiChar.Gender[:1]) + strings.ToLower(apiChar.Gender[1:]))
 	if rand.IntN(100) > 94 {
 		gender = NonbinaryGender
@@ -314,14 +315,14 @@ func CreateRandomCharacter(apiChar nameapi.Character, role Role) Character {
 		Address:     gameobjects.CreateLocation(apiChar.Location, resType, true),
 		Goal:        goal,
 		Role:        role,
-		Behavior:    behavior,
+		Behaviors:   behaviors,
 		possessions: make(map[gameobjects.LootType]gameobjects.Loot),
 	}
 	// A little kludgy, but it does allow me to wrap the methods in one place
-	c.FindTarget = behavior.FindTarget(role.FindTarget(findTarget))
-	c.GetLootAmount = behavior.GetLootAmount(getLootAmount)
-	c.GetRisk = behavior.GetRiskPercent(c.getRisk)
-	c.GetReconTimes = behavior.GetReconModifier(getReconTimes)
+	c.FindTarget = FindTarget(behaviors, role.FindTarget(findTarget))
+	c.GetLootAmount = GetLootAmount(behaviors, getLootAmount)
+	c.GetRisk = GetRiskPercent(behaviors, c.getRisk)
+	c.GetReconTimes = GetReconModifier(behaviors, getReconTimes)
 	return c
 }
 

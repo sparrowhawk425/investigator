@@ -87,10 +87,10 @@ func (gs *GameState) AddCharacterToLocation(location gameobjects.Location, chara
 	}
 }
 
-func (gs *GameState) CreateClue(location gameobjects.Location, clue string) {
+func (gs *GameState) CreateClue(location gameobjects.Location, crime, clue string) {
 	for i := range gs.Places {
 		if gs.Places[i].Equals(location) {
-			gs.Places[i].AddClue(fmt.Sprintf("Day %d: %s", gs.DayNumber, clue))
+			gs.Places[i].AddClue(fmt.Sprintf("Day %d, %s: %s", gs.DayNumber, crime, clue))
 			return
 		}
 	}

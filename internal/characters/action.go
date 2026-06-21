@@ -16,7 +16,7 @@ type GameStateI interface {
 	GetLocationsByLootType(loots []gameobjects.LootType) []gameobjects.Location
 	AddCharacterToLocation(location gameobjects.Location, character Character)
 	CreateCrime(location gameobjects.Location, name string, loot []gameobjects.Loot)
-	CreateClue(location gameobjects.Location, clue string)
+	CreateClue(location gameobjects.Location, crime, clue string)
 	TransferItems(lootType gameobjects.LootType, amount int, src gameobjects.ItemHolder, dest gameobjects.ItemHolder)
 	HasBolo(person Character) bool
 	CreateBoloAlert(location *gameobjects.Location, name string)
@@ -269,7 +269,7 @@ func takeLoot(gs GameStateI, crime string, person *Character) {
 		riskPct := person.GetRisk() + person.GetTarget().GetRiskPercent()
 		percent := rand.IntN(101)
 		if riskPct > percent {
-			gs.CreateClue(*person.GetTarget(), person.CreateClue())
+			gs.CreateClue(*person.GetTarget(), crime, person.CreateClue())
 		}
 	}
 	checkBolo(gs, person)

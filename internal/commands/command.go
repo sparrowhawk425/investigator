@@ -316,7 +316,10 @@ func commandDebugEnemies(gs *gamelogic.GameState, _ []string) (bool, error) {
 		c.Print(printFunc)
 		//TODO: Why isn't this updating? The escape logic works, so why is this always 0?
 		printFunc("Goal: %d/%d\n", c.Goal.Progress, c.Goal.Target)
-		printFunc("Personality: %s\n", c.Behavior.Name)
+		printFunc("Personality Traits:")
+		for _, b := range c.Behaviors {
+			printFunc(" - %s\n", b.Name)
+		}
 	}
 	return false, nil
 }

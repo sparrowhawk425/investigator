@@ -15,7 +15,7 @@ func getAmt(amt int) int {
 func TestGetLootAmount(t *testing.T) {
 
 	// No mod should return 50%
-	behavior := Behavior{LootAmountModifier: 0}
+	behavior := Behaviors{LootAmountModifier: 0}
 	finalAmt := behavior.GetLootAmount(getAmt)(100)
 	assert.Equal(t, 50, finalAmt)
 
@@ -35,6 +35,7 @@ func TestGetLootAmount(t *testing.T) {
 	assert.Equal(t, 1, finalAmt)
 }
 
+// TODO: get the most common from the whole list (return any of ties)?
 func testFindTarget(locations []gameobjects.Location) *gameobjects.Location {
 	places := []gameobjects.Location{}
 
@@ -60,19 +61,19 @@ func TestFindTargetQuality(t *testing.T) {
 	}
 
 	// Test Expensive
-	behavior := Behavior{QualityPreference: []gameobjects.Quality{gameobjects.Expensive}}
+	behavior := Behaviors{QualityPreference: []gameobjects.Quality{gameobjects.Expensive}}
 	target := behavior.FindTarget(testFindTarget)(locations)
 	assert.NotNil(t, target)
 	assert.Equal(t, expensive, target.Address.Name)
 
 	// Test Moderate
-	behavior = Behavior{QualityPreference: []gameobjects.Quality{gameobjects.Moderate}}
+	behavior = Behaviors{QualityPreference: []gameobjects.Quality{gameobjects.Moderate}}
 	target = behavior.FindTarget(testFindTarget)(locations)
 	assert.NotNil(t, target)
 	assert.Equal(t, moderate, target.Address.Name)
 
 	// Test Cheap
-	behavior = Behavior{QualityPreference: []gameobjects.Quality{gameobjects.Cheap}}
+	behavior = Behaviors{QualityPreference: []gameobjects.Quality{gameobjects.Cheap}}
 	target = behavior.FindTarget(testFindTarget)(locations)
 	assert.NotNil(t, target)
 	assert.Equal(t, cheap, target.Address.Name)
@@ -91,20 +92,29 @@ func TestFindTargetLocationType(t *testing.T) {
 	}
 
 	// Test Residence
-	behavior := Behavior{LocationPreference: []gameobjects.LocationType{gameobjects.Residence}}
+	behavior := Behaviors{LocationPreference: []gameobjects.LocationType{gameobjects.Residence}}
 	target := behavior.FindTarget(testFindTarget)(locations)
 	assert.NotNil(t, target)
 	assert.Equal(t, residence, target.Address.Name)
 
 	// Test Store
-	behavior = Behavior{LocationPreference: []gameobjects.LocationType{gameobjects.Store}}
+	behavior = Behaviors{LocationPreference: []gameobjects.LocationType{gameobjects.Store}}
 	target = behavior.FindTarget(testFindTarget)(locations)
 	assert.NotNil(t, target)
 	assert.Equal(t, store, target.Address.Name)
 
 	// Test Casino
-	behavior = Behavior{LocationPreference: []gameobjects.LocationType{gameobjects.Casino}}
+	behavior = Behaviors{LocationPreference: []gameobjects.LocationType{gameobjects.Casino}}
 	target = behavior.FindTarget(testFindTarget)(locations)
 	assert.NotNil(t, target)
 	assert.Equal(t, casino, target.Address.Name)
+
+	// Test no pref
+	behavior = Behaviors{LocationPreference: []gameobjects.LocationType{}}
+	target = behavior.FindTarget(testFindTarget)(locations)
+	assert.Nil(t, target)
+}
+
+func TestFindTargetQualityAndLocationType(t *testing.T) {
+
 }

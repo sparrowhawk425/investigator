@@ -6,7 +6,7 @@ import (
 	"github.com/sparrowhawk425/investigators/internal/gameobjects"
 )
 
-type Behavior struct {
+type Behaviors struct {
 	Name               string
 	Desc               string
 	QualityPreference  []gameobjects.Quality
@@ -18,7 +18,7 @@ type Behavior struct {
 	mutuallyExclusive []string
 }
 
-func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
+func (b Behaviors) FindTarget(findTarget func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
 	return func(locations []gameobjects.Location) *gameobjects.Location {
 		options := []gameobjects.Location{}
 		for _, location := range locations {
@@ -36,7 +36,7 @@ func (b Behavior) FindTarget(findTarget func([]gameobjects.Location) *gameobject
 	}
 }
 
-func (b Behavior) GetLootAmount(getLootAmt func(int) int) func(int) int {
+func (b Behaviors) GetLootAmount(getLootAmt func(int) int) func(int) int {
 	return func(maxAmt int) int {
 		modAmt := maxAmt * (50 + b.LootAmountModifier) / 100
 		// Always return min of 1
@@ -44,20 +44,48 @@ func (b Behavior) GetLootAmount(getLootAmt func(int) int) func(int) int {
 	}
 }
 
-func (b Behavior) GetRiskPercent(getRisk func() int) func() int {
+func (b Behaviors) GetRiskPercent(getRisk func() int) func() int {
 	return func() int {
 		return getRisk() + b.RiskModifier
 	}
 }
 
-func (b Behavior) GetReconModifier(reconTimes func() int) func() int {
+func (b Behaviors) GetReconModifier(reconTimes func() int) func() int {
 	return func() int {
 		return reconTimes() + b.ReconModifier
 	}
 }
 
-func CreateFrugal() Behavior {
-	return Behavior{
+func FindTarget(behaviors []Behaviors, targetFunc func([]gameobjects.Location) *gameobjects.Location) func([]gameobjects.Location) *gameobjects.Location {
+	if len(behaviors) == 0 {
+		return targetFunc
+	}
+	return FindTarget(behaviors[1:], behaviors[0].FindTarget(targetFunc))
+}
+
+func GetLootAmount(behaviors []Behaviors, lootFunc func(int) int) func(int) int {
+	if len(behaviors) == 0 {
+		return lootFunc
+	}
+	return GetLootAmount(behaviors[1:], behaviors[0].GetLootAmount(lootFunc))
+}
+
+func GetRiskPercent(behaviors []Behaviors, riskFunc func() int) func() int {
+	if len(behaviors) == 0 {
+		return riskFunc
+	}
+	return GetRiskPercent(behaviors[1:], behaviors[0].GetRiskPercent(riskFunc))
+}
+
+func GetReconModifier(behaviors []Behaviors, reconFunc func() int) func() int {
+	if len(behaviors) == 0 {
+		return reconFunc
+	}
+	return GetReconModifier(behaviors[1:], behaviors[0].GetReconModifier(reconFunc))
+}
+
+func CreateFrugal() Behaviors {
+	return Behaviors{
 		Name:               "Frugal",
 		Desc:               "Prone to conserving money and prefer cheap locations",
 		QualityPreference:  []gameobjects.Quality{gameobjects.Cheap},
@@ -66,8 +94,8 @@ func CreateFrugal() Behavior {
 	}
 }
 
-func CreateProfligate() Behavior {
-	return Behavior{
+func CreateProfligate() Behaviors {
+	return Behaviors{
 		Name:               "Profligate",
 		Desc:               "Prone to spending money and prefer expensive locations",
 		QualityPreference:  []gameobjects.Quality{gameobjects.Expensive},
@@ -76,16 +104,17 @@ func CreateProfligate() Behavior {
 	}
 }
 
-func CreateGambler() Behavior {
-	return Behavior{
+func CreateGambler() Behaviors {
+	return Behaviors{
 		Name:               "Gambler",
 		Desc:               "Tends to spend free time in Casinos. More willing to take risks",
 		LocationPreference: []gameobjects.LocationType{gameobjects.Casino},
+		RiskModifier:       20,
 	}
 }
 
-func CreateCautious() Behavior {
-	return Behavior{
+func CreateCautious() Behaviors {
+	return Behaviors{
 		Name:              "Cautious",
 		Desc:              "Takes fewer risks and takes more time to reconnoiter",
 		RiskModifier:      -10,
@@ -94,23 +123,39 @@ func CreateCautious() Behavior {
 	}
 }
 
-func CreateReckless() Behavior {
-	return Behavior{
+func CreateReckless() Behaviors {
+	return Behaviors{
 		Name:              "Reckless",
-		Desc:              "Takes more rists and takes less time to reconnoiter",
+		Desc:              "Takes more risks and takes less time to reconnoiter",
 		RiskModifier:      10,
 		ReconModifier:     -1,
 		mutuallyExclusive: []string{"Cautious"},
 	}
 }
 
-var RegularBehaviors = []Behavior{
+var RegularBehaviors = []Behaviors{
 	CreateFrugal(), CreateProfligate(), CreateGambler(), CreateCautious(), CreateReckless(),
 }
 
-func CreateSquatter() Behavior {
-	return Behavior{
+func CreateSquatter() Behaviors {
+	return Behaviors{
 		Name: "Squatter",
 		Desc: "Lives in unoccupied buildings",
+	}
+}
+
+func CreateLawful() Behaviors {
+	return Behaviors{
+		Name:              "Lawful",
+		Desc:              "Implicitly trusts law enforcement and follows the rules",
+		mutuallyExclusive: []string{"Chaotic"},
+	}
+}
+
+func CreateChaotic() Behaviors {
+	return Behaviors{
+		Name:              "Chaotic",
+		Desc:              "Distrusts law enforcement and breaks the rules",
+		mutuallyExclusive: []string{"Lawful"},
 	}
 }
